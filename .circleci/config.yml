@@ -48,7 +48,6 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
             cd ./frontend
             npm i
             npm run build
@@ -70,7 +69,6 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
             cd ./backend
             npm i
             npm run build
