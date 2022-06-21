@@ -32,14 +32,15 @@ Circleci Pipeline to deploy a web application
 
 # JIRA integration with Circleci
 
+    orbs:
+
+      jira: circleci/jira@1.3.1
+
 - Install Circleci App in JIRA. Click on Get started and copy Token to
 - Circleci : Project settings > Jira Integration
 - Circleci: Personal settings > Create Access Token and copy Token to
 - Circleci : Project settings > Environment Variables > CIRCLE_TOKEN
 
-orbs:
-
-  jira: circleci/jira@1.3.1
   
 # Slack integration with Circleci
 
@@ -47,6 +48,6 @@ orbs:
 
       slack: circleci/slack@4.10.1
 
-- To obtain a Bot Auth follow steps in [Connecting Circleci to Slack](https://github.com/CircleCI-Public/slack-orb/wiki/Setup and Copy to 
+- To obtain a Bot Auth follow steps in [Connecting Circleci to Slack](https://github.com/CircleCI-Public/slack-orb/wiki/Setup) and Copy to 
 - Circleci : Project settings > Environment Variables > SLACK_ACCESS_TOKEN
 - Circleci : Project settings > Environment Variables > SLACK_DEFAULT_CHANNEL
