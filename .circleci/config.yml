@@ -31,39 +31,54 @@ version: 2.1
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
+defaults: &defaults
+  docker:
+    - image: circleci/node:13.8.0
             
 jobs:
   build-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: 
+            - v1-frontend-build-{{ checksum "package-lock.json" }}
+            # fallback to using the latest cache 
+            - v1-frontend-build-
       - run:
           name: Build front-end
           command: |
             # Your code here
-            exit 1
+            cd ./frontend
+            npm i
+            npm run build
       - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build
+          paths: 
+            - frontend/node_modules
+          key: v1-frontend-build-{{ checksum "package-lock.json" }}
+      # - jira/notify
 
   build-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys:
+            - v1-backend-build-{{ checksum "backend/package-lock.json" }}
+            # fallback to using the latest cache 
+            - v1-backend-build-
       - run:
           name: Back-end build
           command: |
              # Your code here
-             exit 1
+            cd ./backend
+            npm i
+            npm run build
       - save_cache:
-          paths: [backend/node_modules]
-          key: backend-build
+          paths: 
+            - backend/node_modules
+          key: v1-backend-build-{{ checksum "package-lock.json" }}
+      # - jira/notify
 
 #   test-frontend:
 #     docker:
