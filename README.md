@@ -24,11 +24,13 @@ Circleci Pipeline to deploy a web application
 
 # Notification Setup
 
-* JIRA integration with Circleci
-
 ![Jira screenshot1](/docs/screenshots/SCREENSHOT02_jira1.png)
 
+
 ![Jira screenshot2](/docs/screenshots/SCREENSHOT02_jira2.png)
+
+
+# JIRA integration with Circleci
 
 - Install Circleci App in JIRA. Click on Get started and copy Token to
 - Circleci : Project settings > Jira Integration
@@ -39,7 +41,7 @@ orbs:
 
   jira: circleci/jira@1.3.1
   
-* Slack
+# Slack integration with Circleci
 
     orbs: 
 
