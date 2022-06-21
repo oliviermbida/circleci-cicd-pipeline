@@ -131,8 +131,8 @@ jobs:
           command: |
             cd ./frontend 
             npm install 
-            npm audit --audit-level=critical
-            #npm audit fix --audit-level=critical --force
+            #npm audit --audit-level=critical
+            npm audit fix --audit-level=critical --force
       # - jira/notify
   scan-backend:
     <<: *defaults
@@ -149,8 +149,8 @@ jobs:
           command: |
             cd ./backend 
             npm install
-            npm audit --audit-level=critical 
-            #npm audit fix --audit-level=critical --force
+            #npm audit --audit-level=critical 
+            npm audit fix --audit-level=critical --force
       # - jira/notify
 #   deploy-infrastructure:
 #     docker:
