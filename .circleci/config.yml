@@ -1,6 +1,7 @@
 version: 2.1
 orbs: 
   jira: circleci/jira@1.3.1
+  slack: circleci/slack@4.10.1
 #   # sonarqube: clicklogiq/sonarqube@1.0.1
 #   sonarcloud: sonarsource/sonarcloud@1.1.1
 
@@ -99,6 +100,16 @@ jobs:
             npm i
             npm test 
       # - jira/notify              
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: basic_success_1
+      # - run:
+      #     name: Notify failed Tests
+      #     command: curl --data fail_tests.log http://example.com/error_logs
+      #     when: on_fail             
   test-backend:
     <<: *defaults
     steps:
@@ -116,6 +127,16 @@ jobs:
             npm i
             npm test 
       # - jira/notify            
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: basic_success_1
+      # - run:
+      #     name: Notify failed Tests
+      #     command: curl --data fail_tests.log http://example.com/error_logs
+      #     when: on_fail             
   scan-frontend:
     <<: *defaults
     steps:
