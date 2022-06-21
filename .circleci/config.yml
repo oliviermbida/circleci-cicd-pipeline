@@ -130,8 +130,8 @@ jobs:
           name: Scan front-end
           command: |
             cd ./frontend 
+            npm install 
             npm audit --audit-level=critical
-            npm install  
             #npm audit fix --audit-level=critical --force
       # - jira/notify
   scan-backend:
@@ -148,8 +148,8 @@ jobs:
           name: Scan front-end
           command: |
             cd ./backend 
-            npm audit --audit-level=critical 
             npm install
+            npm audit --audit-level=critical 
             #npm audit fix --audit-level=critical --force
       # - jira/notify
 #   deploy-infrastructure:
