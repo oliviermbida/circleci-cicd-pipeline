@@ -116,6 +116,42 @@ jobs:
             npm i
             npm test 
       # - jira/notify            
+  scan-frontend:
+    <<: *defaults
+    steps:
+      - checkout
+      # Restore from cache
+      - restore_cache:
+          keys: 
+            - v1-frontend-build-{{ checksum "package-lock.json" }}
+            # fallback to using the latest cache 
+            - v1-frontend-build-
+      - run:
+          name: Scan front-end
+          command: |
+            cd ./frontend 
+            npm audit --audit-level=critical
+            npm install  
+            #npm audit fix --audit-level=critical --force
+      # - jira/notify
+  scan-backend:
+    <<: *defaults
+    steps:
+      - checkout
+      # Restore from cache
+      - restore_cache:
+          keys: 
+            - v1-backend-build-{{ checksum "package-lock.json" }}
+            # fallback to using the latest cache 
+            - v1-backend-build-
+      - run:
+          name: Scan front-end
+          command: |
+            cd ./backend 
+            npm audit --audit-level=critical 
+            npm install
+            #npm audit fix --audit-level=critical --force
+      # - jira/notify
 #   deploy-infrastructure:
 #     docker:
 #       # Docker image here that supports AWS CLI
@@ -307,10 +343,20 @@ workflows:
           filters:
             branches:
               only: master
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
+      - scan-backend:
+          post-steps:
+            - jira/notify:
+                environment_type: testing
+                job_type: build
+          requires: 
+            - build-backend
+      - scan-frontend:
+          post-steps:
+            - jira/notify:
+                environment_type: testing
+                job_type: build
+          requires: 
+            - build-frontend
       # - deploy-infrastructure:
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       #     filters:
