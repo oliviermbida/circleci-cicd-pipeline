@@ -96,6 +96,7 @@ jobs:
           name: Test front-end
           command: |
             cd ./frontend 
+            npm i
             npm test 
       # - jira/notify              
   test-backend:
@@ -112,6 +113,7 @@ jobs:
           name: Test front-end
           command: |
             cd ./backend 
+            npm i
             npm test 
       # - jira/notify            
 #   deploy-infrastructure:
