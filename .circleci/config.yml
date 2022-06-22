@@ -103,8 +103,6 @@ commands:
               chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
               chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/jre/bin/java
 
-              curl -u SONAR_TOKEN: https://sonarqube.com/api/user_tokens/search
-
               cd <<parameters.project_root>>
               $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
               -Dsonar.host.url=<< parameters.host_url >> \
