@@ -362,10 +362,10 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
+      - build-frontend:
           pre-steps: # Check commit message before build-frontend
             - cancel-workflow
-      - build-backend
+      - build-backend:
           pre-steps: # Check commit message before build-backend
             - cancel-workflow
       - test-frontend:
