@@ -51,7 +51,7 @@ commands:
             commit_message=$(git log -1 HEAD --pretty=format:%s)
             if [[ $commit_message == *${<<parameters.custom-identifier>>}* ]]; then
             curl --request POST \
-              --url https://circleci.com/api/v2/workflow/${<<parameters.workflow_id>>}/cancel \
+              --url https://circleci.com/api/v2/workflow/<<parameters.workflow_id>>/cancel \
               --header "Circle-Token: ${CIRCLE_TOKEN}"
             echo "${<<parameters.custom-identifier>>} commit, cancelling workflow ${<<parameters.workflow_id>>}"
             fi
