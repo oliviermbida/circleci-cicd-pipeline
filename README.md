@@ -46,6 +46,8 @@ Circleci Pipeline to deploy a web application
 
 ![Slack screenshot1](/docs/screenshots/SCREENSHOT04_slack.png)
 
+![Slack screenshot1](/docs/screenshots/SCREENSHOT04_slack2.png)
+
 # JIRA integration with Circleci
 
     orbs:
