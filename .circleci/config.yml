@@ -69,7 +69,7 @@ commands:
           default: "**/*.yaml,**/*.yml"
         host_url:
           type: string
-          default: "http://localhost:9000"
+          default: "https://sonarcloud.io"
         sources:
           type: string
           default: "."
