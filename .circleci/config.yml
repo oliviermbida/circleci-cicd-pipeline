@@ -76,6 +76,12 @@ commands:
         runner_opts:
           type: string
           default: "-Xms1024m"
+        projectKey:
+          type: string
+          default: "circle-cicd-pipeline"
+        organization:
+          type: string
+          default: "ai-uavsystems"
       steps:
         - run:
             command: mkdir -p /tmp/cache/scanner
@@ -105,6 +111,8 @@ commands:
 
               cd <<parameters.project_root>>
               $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
+              -Dsonar.organization=<< parameters.organization >> \
+              -Dsonar.projectKey=<< parameters.projectKey >> \
               -Dsonar.host.url=<< parameters.host_url >> \
               -Dsonar.login=$SONAR_TOKEN \
               -Dsonar.projectBaseDir=<< parameters.project_root >> \
