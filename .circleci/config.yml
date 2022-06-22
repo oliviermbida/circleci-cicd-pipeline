@@ -107,7 +107,7 @@ commands:
 
               cd <<parameters.project_root>>
               $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
-              -Dsonar.host.url=${<< parameters.host_url >>} \
+              -Dsonar.host.url=<< parameters.host_url >> \
               -Dsonar.login=$SONAR_TOKEN \
               -Dsonar.projectBaseDir=<< parameters.project_root >> \
               -Dsonar.sources=<< parameters.sources >> \
