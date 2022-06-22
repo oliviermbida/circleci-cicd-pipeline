@@ -7,12 +7,19 @@ Circleci Pipeline to deploy a web application
 
 ![Build screenshot1-3](/docs/screenshots/SCREENSHOT01-3.png)
 
+- Triggers (check commit message before build and stop automatic builds)
+
+![Build screenshot1_trigger](/docs/screenshots/SCREENSHOT01_trigger.png)
+
 # Test
 
 ![Test screenshot2](/docs/screenshots/SCREENSHOT02-1.png)
 
 ![Test screenshot2 Fix](/docs/screenshots/SCREENSHOT02-2.png)
 
+- Triggers (nightly tests)
+
+![Test screenshot2 nightly](/docs/screenshots/SCREENSHOT02_nightly.png)
 
 # Audit
 
