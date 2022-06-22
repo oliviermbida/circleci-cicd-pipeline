@@ -31,11 +31,9 @@ Circleci Pipeline to deploy a web application
 
 # Notification Setup
 
-![Jira screenshot1](/docs/screenshots/SCREENSHOT02_jira1.png)
+![Jira screenshot1](/docs/screenshots/SCREENSHOT02_jira.png)
 
-
-![Jira screenshot2](/docs/screenshots/SCREENSHOT02_jira2.png)
-
+![Slack screenshot1](/docs/screenshots/SCREENSHOT04_slack.png)
 
 # JIRA integration with Circleci
 
