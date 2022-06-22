@@ -5,7 +5,7 @@ orbs:
 #   # sonarqube: clicklogiq/sonarqube@1.0.1
 #   sonarcloud: sonarsource/sonarcloud@1.1.1
 
-# commands:
+commands:
 #   destroy-environment:
 #     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
 #     parameters:
@@ -36,6 +36,26 @@ orbs:
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
+    cancel-workflow:
+      description: Cancel workflow given a commit message to stop it being run automatically
+      parameters:
+        workflow_id:
+          type: string
+          default: $CIRCLE_WORKFLOW_ID
+        custom-identifier:
+          type: string
+          default: "NO_BUILD"
+      steps: 
+        - checkout
+        - run: | 
+            commit_message=$(git log -1 HEAD --pretty=format:%s)
+            if [[ $commit_message == *${<<parameters.custom-identifier>>}* ]]; then
+            curl --request POST \
+              --url https://circleci.com/api/v2/workflow/${<<parameters.workfow_id>>}/cancel \
+              --header "Circle-Token: ${CIRCLE_TOKEN}"
+            echo "${<<parameters.custom-identifier>>} commit, cancelling workflow ${<<parameters.workfow_id>>}"
+            fi
+
 defaults: &defaults
   docker:
     - image: circleci/node:13.8.0
@@ -343,7 +363,11 @@ workflows:
   default:
     jobs:
       - build-frontend
+          pre-steps: # Check commit message before build-frontend
+            - cancel-workflow
       - build-backend
+          pre-steps: # Check commit message before build-backend
+            - cancel-workflow
       - test-frontend:
           post-steps:
             - jira/notify:
