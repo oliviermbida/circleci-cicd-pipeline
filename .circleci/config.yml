@@ -109,7 +109,8 @@ commands:
               chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
               chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/jre/bin/java
 
-              curl -u SONAR_TOKEN: <<parameters.host_url>>/api/user_tokens/generate
+              # curl -u SONAR_TOKEN: <<parameters.host_url>>/api/user_tokens/generate
+              
               cd <<parameters.project_root>>
               $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
               -Dsonar.organization=<< parameters.organization >> \
