@@ -69,7 +69,7 @@ commands:
           default: "**/*.yaml,**/*.yml"
         host_url:
           type: string
-          default: "https://sonarcloud.io"
+          default: $SONARQUBE_SERVER_URL
         sources:
           type: string
           default: "."
@@ -81,7 +81,7 @@ commands:
           default: "circle-cicd-pipeline"
         organization:
           type: string
-          default: "ai-cloudsolutions"
+          default: $SONARQUBE_SERVER_ORG
       steps:
         - run:
             command: mkdir -p /tmp/cache/scanner
@@ -132,7 +132,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - v1-frontend-build-{{ checksum "package-lock.json" }}
+            - v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-frontend-build-
       - run:
@@ -144,7 +144,7 @@ jobs:
       - save_cache:
           paths: 
             - frontend/node_modules
-          key: v1-frontend-build-{{ checksum "package-lock.json" }}
+          key: v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
       # - jira/notify
 
   build-backend:
@@ -439,8 +439,6 @@ jobs:
 #             then
 #               # your code here
 #             fi
-            
-
 workflows:
   default:
     jobs:
