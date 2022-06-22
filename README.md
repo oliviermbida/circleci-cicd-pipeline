@@ -29,6 +29,17 @@ Circleci Pipeline to deploy a web application
 
 ![Audit screenshot3 Jira](/docs/screenshots/SCREENSHOT03_fixed_jira.png)
 
+- SonarQube integration with circleci
+
+![Audit screenshot3](/docs/screenshots/SCREENSHOT03_sonarqube.png)
+
+![Audit screenshot3](/docs/screenshots/SCREENSHOT03_sonarqube2.png)
+
+- Create project at [SonarCloud](https://sonarcloud.io/)
+- Add scan job to pipeline with SonarCloud details of organisation and project created
+- Add SONAR_TOKEN environment to circleci project
+- Run circleci scan job and report will be posted to SonarCloud project area (or configure where to post scan reports)
+
 # Notification Setup
 
 ![Jira screenshot1](/docs/screenshots/SCREENSHOT02_jira.png)
