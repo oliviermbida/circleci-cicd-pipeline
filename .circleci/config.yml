@@ -219,7 +219,7 @@ jobs:
     steps:
       - checkout
       - scan:
-          project_root: ./frontend
+          project_root: .
       # Restore from cache
       - restore_cache:
           keys: 
@@ -242,7 +242,7 @@ jobs:
     steps:
       - checkout
       - scan:
-          project_root: ./backend
+          project_root: .
       # Restore from cache
       - restore_cache:
           keys: 
