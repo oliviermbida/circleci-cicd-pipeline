@@ -34,6 +34,29 @@ commands:
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
+    revert-commit:
+      description: To revert a commit on fail , it needs to have a REVERT trigger in commit message
+      # parameters:
+      #   commit_sha:
+      #     type: string
+      steps: 
+        - run: 
+            name: Revert last commit on fail
+            command: |
+              commit_message=$(git log -1 HEAD --pretty=format:%s)
+              if [[ $commit_message == *REVERT* ]]; then
+              echo "Revert commit on Fail"
+
+              # Caution using reset: circleci shares repo, this may cause pull issues as the reverted commit will not exist
+              #git reset --hard $commit_sha 
+
+              # This creates a new commit reversing the last commit but does not delete that commit history
+              git revert HEAD  
+              curl --request POST \
+                --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
+                --header "Circle-Token: ${CIRCLE_TOKEN}"
+              fi            
+                
     cancel-workflow:
       description: Cancel workflow given a commit message to stop it being run automatically
       parameters:
@@ -45,7 +68,9 @@ commands:
           default: "NO_BUILD"
       steps: 
         - checkout
-        - run: | 
+        - run:
+            name: Stop automatic builds 
+            command: |
             commit_message=$(git log -1 HEAD --pretty=format:%s)
             if [[ $commit_message == *<<parameters.custom-identifier>>* ]]; then
             echo "<<parameters.custom-identifier>> commit, cancelling workflow <<parameters.workflow_id>>"
@@ -153,7 +178,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-backend-build-{{ checksum "backend/package-lock.json" }}
+            - v1-backend-build-{{ checksum "./backend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-backend-build-
       - run:
@@ -165,7 +190,7 @@ jobs:
       - save_cache:
           paths: 
             - backend/node_modules
-          key: v1-backend-build-{{ checksum "package-lock.json" }}
+          key: v1-backend-build-{{ checksum "./backend/package-lock.json" }}
       # - jira/notify
 
   test-frontend:
@@ -175,7 +200,7 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: 
-            - v1-frontend-build-{{ checksum "package-lock.json" }}
+            - v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-frontend-build-
       - run:
@@ -202,7 +227,7 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: 
-            - v1-backend-build-{{ checksum "package-lock.json" }}
+            - v1-backend-build-{{ checksum "./backend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-backend-build-
       - run:
@@ -229,7 +254,7 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: 
-            - v1-frontend-build-{{ checksum "package-lock.json" }}
+            - v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-frontend-build-
       - run:
@@ -250,7 +275,7 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: 
-            - v1-backend-build-{{ checksum "package-lock.json" }}
+            - v1-backend-build-{{ checksum "./backend/package-lock.json" }}
             # fallback to using the latest cache 
             - v1-backend-build-
       - run:
@@ -443,11 +468,23 @@ workflows:
   default:
     jobs:
       - build-frontend:
-          pre-steps: # Check commit message before build-frontend
+          pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
+          post-steps: # Check commit message if REVERT on fail
+            - when:
+                condition: on_fail
+                steps:
+                - revert-commit
+                    # commit_sha: $CIRCLE_SHA1          
       - build-backend:
-          pre-steps: # Check commit message before build-backend
+          pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
+          post-steps: # Check commit message if REVERT on fail
+            - when:
+                condition: on_fail
+                steps:
+                - revert-commit
+                    # commit_sha: $CIRCLE_SHA1  
       - test-frontend:
           post-steps:
             - jira/notify:
