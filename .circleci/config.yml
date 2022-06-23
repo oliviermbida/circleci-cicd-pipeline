@@ -36,10 +36,11 @@ commands:
 #             fi
     revert-commit:
       description: To revert a commit on fail , it needs to have a REVERT trigger in commit message
-      # parameters:
-      #   commit_sha:
-      #     type: string
+      parameters:
+        commit_sha:
+          type: string
       steps: 
+        # - checkout
         - run: 
             name: Revert last commit on fail
             command: |
@@ -47,15 +48,48 @@ commands:
               if [[ $commit_message == *REVERT* ]]; then
               echo "Revert commit on Fail"
 
-              # Caution using reset: circleci shares repo, this may cause pull issues as the reverted commit will not exist
-              #git reset --hard $commit_sha 
+              echo "Using SSH Config Dir '$SSH_CONFIG_DIR'"
+              git --version 
 
-              # This creates a new commit reversing the last commit but does not delete that commit history
-              git revert HEAD  
-              curl --request POST \
-                --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
-                --header "Circle-Token: ${CIRCLE_TOKEN}"
-              fi            
+              mkdir -p "$SSH_CONFIG_DIR"
+              chmod 0700 "$SSH_CONFIG_DIR"
+
+              printf "%s" 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+              github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+              github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+              bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==
+              gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
+              ' >> "$SSH_CONFIG_DIR/known_hosts"
+              chmod 0600 "$SSH_CONFIG_DIR/known_hosts"
+
+              rm -f "$SSH_CONFIG_DIR/id_rsa"
+              printf "%s" "$CHECKOUT_KEY" > "$SSH_CONFIG_DIR/id_rsa"
+              chmod 0600 "$SSH_CONFIG_DIR/id_rsa"
+              if (: "${CHECKOUT_KEY_PUBLIC?}") 2>/dev/null; then
+                rm -f "$SSH_CONFIG_DIR/id_rsa.pub"
+                printf "%s" "$CHECKOUT_KEY_PUBLIC" > "$SSH_CONFIG_DIR/id_rsa.pub"
+              fi
+
+              export GIT_SSH_COMMAND='ssh -i "$SSH_CONFIG_DIR/id_rsa" -o UserKnownHostsFile="$SSH_CONFIG_DIR/known_hosts"'
+
+              # use git+ssh instead of https
+              git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
+              git config --global gc.auto 0 || true
+              git config --global user.email $USER_EMAIL
+              git config --global user.name $USER_NAME
+
+              # Caution using reset: this may cause push issues as the reverted commit will not exist
+              #git reset --hard <<parameters.commit_sha>> 
+              #git push --force
+
+              # This reverses last commit but does not delete that commit history
+              git revert --no-commit <<parameters.commit_sha>> 
+              git push --force
+       
+              #curl --request POST \
+              #  --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
+              #  --header "Circle-Token: ${CIRCLE_TOKEN}"
+              fi           
                 
     cancel-workflow:
       description: Cancel workflow given a commit message to stop it being run automatically
@@ -68,16 +102,18 @@ commands:
           default: "NO_BUILD"
       steps: 
         - checkout
+        # - run: git submodule sync
+        # - run: git submodule update --init
         - run:
             name: Stop automatic builds 
             command: |
-            commit_message=$(git log -1 HEAD --pretty=format:%s)
-            if [[ $commit_message == *<<parameters.custom-identifier>>* ]]; then
-            echo "<<parameters.custom-identifier>> commit, cancelling workflow <<parameters.workflow_id>>"
-            curl --request POST \
-              --url https://circleci.com/api/v2/workflow/<<parameters.workflow_id>>/cancel \
-              --header "Circle-Token: ${CIRCLE_TOKEN}"
-            fi
+              commit_message=$(git log -1 HEAD --pretty=format:%s)
+              if [[ $commit_message == *<<parameters.custom-identifier>>* ]]; then
+              echo "<<parameters.custom-identifier>> commit, cancelling workflow <<parameters.workflow_id>>"
+              curl --request POST \
+                --url https://circleci.com/api/v2/workflow/<<parameters.workflow_id>>/cancel \
+                --header "Circle-Token: ${CIRCLE_TOKEN}"
+              fi
     scan:
       description: Detect bugs and vulnerabilities using sonar scanner
       parameters:
@@ -170,6 +206,11 @@ jobs:
           paths: 
             - frontend/node_modules
           key: v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
+      # - when:
+      #     condition: on_fail
+      #     steps:
+      #       - revert-commit:
+      #           commit_sha: $CIRCLE_SHA1  
       # - jira/notify
 
   build-backend:
@@ -191,12 +232,21 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-build-{{ checksum "./backend/package-lock.json" }}
+      # - when:
+      #     condition: on_fail
+      #     steps:
+      #       - revert-commit:
+      #           commit_sha: $CIRCLE_SHA1  
       # - jira/notify
 
   test-frontend:
     <<: *defaults
     steps:
       - checkout
+      - run: |
+          if [ "$CIRCLE_BRANCH" = "develop" ]; then
+              circleci-agent step halt
+          fi
       # Restore from cache
       - restore_cache:
           keys: 
@@ -224,6 +274,10 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - run: |
+          if [ "$CIRCLE_BRANCH" = "develop" ]; then
+              circleci-agent step halt
+          fi
       # Restore from cache
       - restore_cache:
           keys: 
@@ -469,22 +523,10 @@ workflows:
     jobs:
       - build-frontend:
           pre-steps: # Check commit message if NO_BUILD
-            - cancel-workflow
-          post-steps: # Check commit message if REVERT on fail
-            - when:
-                condition: on_fail
-                steps:
-                - revert-commit
-                    # commit_sha: $CIRCLE_SHA1          
+            - cancel-workflow      
       - build-backend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
-          post-steps: # Check commit message if REVERT on fail
-            - when:
-                condition: on_fail
-                steps:
-                - revert-commit
-                    # commit_sha: $CIRCLE_SHA1  
       - test-frontend:
           post-steps:
             - jira/notify:
@@ -492,9 +534,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
       - test-backend:
           post-steps:
             - jira/notify:
@@ -502,9 +544,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
       - scan-backend:
           post-steps:
             - jira/notify:
