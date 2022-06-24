@@ -1,0 +1,35 @@
+Description: "UdaPeople top level Stack Update version 1. Backend deployment.\n"
+Parameters:
+  WorkflowID:
+    Description: Unique identifier.
+    Type: String
+    Default: cli803394216630
+Resources:
+  compliance:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/udapeoples3-cfn803394216630/a5d5ab7bd19cc6dd218cf0241efb6143.template
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${AWS::StackName}-compliance-${WorkflowID}
+  rdspostgres:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - compliance
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/udapeoples3-cfn803394216630/8fa4688bf61f59a1435f6cb0e4c22e0f.template
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${AWS::StackName}-rdspostgres-${WorkflowID}
+  ec2backend:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - compliance
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/udapeoples3-cfn803394216630/fc70fad8ea34cafd3dfbd9d5033582f6.template
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${AWS::StackName}-backend-${WorkflowID}

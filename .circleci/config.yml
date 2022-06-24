@@ -34,154 +34,239 @@ commands:
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
-    revert-commit:
-      description: To revert a commit on fail , it needs to have a REVERT trigger in commit message
-      parameters:
-        commit_sha:
-          type: string
-      steps: 
-        # - checkout
-        - run: 
-            name: Revert last commit on fail
-            command: |
-              commit_message=$(git log -1 HEAD --pretty=format:%s)
-              if [[ $commit_message == *REVERT* ]]; then
-              echo "Revert commit on Fail"
+  revert-commit:
+    description: To revert a commit on fail , it needs to have a REVERT trigger in commit message
+    parameters:
+      commit_sha:
+        type: string
+    steps: 
+      # - checkout
+      - run: 
+          name: Revert last commit on fail
+          command: |
+            commit_message=$(git log -1 HEAD --pretty=format:%s)
+            if [[ $commit_message == *REVERT* ]]; then
+            echo "Revert commit on Fail"
 
-              echo "Using SSH Config Dir '$SSH_CONFIG_DIR'"
-              git --version 
+            echo "Using SSH Config Dir '$SSH_CONFIG_DIR'"
+            git --version 
 
-              mkdir -p "$SSH_CONFIG_DIR"
-              chmod 0700 "$SSH_CONFIG_DIR"
+            mkdir -p "$SSH_CONFIG_DIR"
+            chmod 0700 "$SSH_CONFIG_DIR"
 
-              printf "%s" 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
-              github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
-              github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-              bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==
-              gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
-              ' >> "$SSH_CONFIG_DIR/known_hosts"
-              chmod 0600 "$SSH_CONFIG_DIR/known_hosts"
+            printf "%s" 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+            github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+            github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+            bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==
+            gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
+            ' >> "$SSH_CONFIG_DIR/known_hosts"
+            chmod 0600 "$SSH_CONFIG_DIR/known_hosts"
 
-              rm -f "$SSH_CONFIG_DIR/id_rsa"
-              printf "%s" "$CHECKOUT_KEY" > "$SSH_CONFIG_DIR/id_rsa"
-              chmod 0600 "$SSH_CONFIG_DIR/id_rsa"
-              if (: "${CHECKOUT_KEY_PUBLIC?}") 2>/dev/null; then
-                rm -f "$SSH_CONFIG_DIR/id_rsa.pub"
-                printf "%s" "$CHECKOUT_KEY_PUBLIC" > "$SSH_CONFIG_DIR/id_rsa.pub"
-              fi
+            rm -f "$SSH_CONFIG_DIR/id_rsa"
+            printf "%s" "$CHECKOUT_KEY" > "$SSH_CONFIG_DIR/id_rsa"
+            chmod 0600 "$SSH_CONFIG_DIR/id_rsa"
+            if (: "${CHECKOUT_KEY_PUBLIC?}") 2>/dev/null; then
+              rm -f "$SSH_CONFIG_DIR/id_rsa.pub"
+              printf "%s" "$CHECKOUT_KEY_PUBLIC" > "$SSH_CONFIG_DIR/id_rsa.pub"
+            fi
 
-              export GIT_SSH_COMMAND='ssh -i "$SSH_CONFIG_DIR/id_rsa" -o UserKnownHostsFile="$SSH_CONFIG_DIR/known_hosts"'
+            export GIT_SSH_COMMAND='ssh -i "$SSH_CONFIG_DIR/id_rsa" -o UserKnownHostsFile="$SSH_CONFIG_DIR/known_hosts"'
 
-              # use git+ssh instead of https
-              git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
-              git config --global gc.auto 0 || true
-              git config --global user.email $USER_EMAIL
-              git config --global user.name $USER_NAME
+            # use git+ssh instead of https
+            git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
+            git config --global gc.auto 0 || true
+            git config --global user.email $USER_EMAIL
+            git config --global user.name $USER_NAME
 
-              # Caution using reset: this may cause push issues as the reverted commit will not exist
-              #git reset --hard <<parameters.commit_sha>> 
-              #git push --force
+            # Caution using reset: this may cause push issues as the reverted commit will not exist
+            #git reset --hard <<parameters.commit_sha>> 
+            #git push --force
 
-              # This reverses last commit but does not delete that commit history
-              git revert --no-commit <<parameters.commit_sha>> 
-              git push --force
-       
-              #curl --request POST \
-              #  --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
-              #  --header "Circle-Token: ${CIRCLE_TOKEN}"
-              fi           
-                
-    cancel-workflow:
-      description: Cancel workflow given a commit message to stop it being run automatically
-      parameters:
-        workflow_id:
-          type: string
-          default: $CIRCLE_WORKFLOW_ID
-        custom-identifier:
-          type: string
-          default: "NO_BUILD"
-      steps: 
-        - checkout
-        # - run: git submodule sync
-        # - run: git submodule update --init
-        - run:
-            name: Stop automatic builds 
-            command: |
-              commit_message=$(git log -1 HEAD --pretty=format:%s)
-              if [[ $commit_message == *<<parameters.custom-identifier>>* ]]; then
-              echo "<<parameters.custom-identifier>> commit, cancelling workflow <<parameters.workflow_id>>"
-              curl --request POST \
-                --url https://circleci.com/api/v2/workflow/<<parameters.workflow_id>>/cancel \
-                --header "Circle-Token: ${CIRCLE_TOKEN}"
-              fi
-    scan:
-      description: Detect bugs and vulnerabilities using sonar scanner
-      parameters:
-        cache_version:
-          default: 1
-          description: increment this value if the cache is corrupted and you want to start with a clean cache
-          type: integer
-        project_root:
-          default: .
-          description: the root of the project that should be analyzed (relative to the root directory of the repository)
-          type: string
-        exclusions:
-          type: string
-          default: "**/*.yaml,**/*.yml"
-        host_url:
-          type: string
-          default: $SONARQUBE_SERVER_URL
-        sources:
-          type: string
-          default: "."
-        runner_opts:
-          type: string
-          default: "-Xms1024m"
-        projectKey:
-          type: string
-          default: "circle-cicd-pipeline"
-        organization:
-          type: string
-          default: $SONARQUBE_SERVER_ORG
-      steps:
-        - run:
-            command: mkdir -p /tmp/cache/scanner
-            name: Create cache directory if it doesn't exist
-        - restore_cache:
-            keys:
-              - v<<parameters.cache_version>>-sonarcloud-scanner-4.7.0.2747
-        - run:
-            name: SonarCloud
-            command: |
-              set -e
-              VERSION=4.7.0.2747
-              SCANNER_DIRECTORY=/tmp/cache/scanner
-              export SONAR_USER_HOME=$SCANNER_DIRECTORY/.sonar
-              OS="linux"
-              echo $SONAR_USER_HOME
+            # This reverses last commit but does not delete that commit history
+            git revert --no-commit <<parameters.commit_sha>> 
+            git push --force
+      
+            #curl --request POST \
+            #  --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
+            #  --header "Circle-Token: ${CIRCLE_TOKEN}"
+            fi           
 
-              export SONAR_RUNNER_OPTS="<< parameters.runner_opts >>"
+  cancel-workflow:
+    description: Cancel workflow given a commit message to stop it being run automatically
+    parameters:
+      workflow_id:
+        type: string
+        default: $CIRCLE_WORKFLOW_ID
+      custom-identifier:
+        type: string
+        default: "NO_BUILD"
+    steps: 
+      - checkout
+      # - run: git submodule sync
+      # - run: git submodule update --init
+      - run:
+          name: Stop automatic builds 
+          command: |
+            commit_message=$(git log -1 HEAD --pretty=format:%s)
+            if [[ $commit_message == *<<parameters.custom-identifier>>* ]]; then
+            echo "<<parameters.custom-identifier>> commit, cancelling workflow <<parameters.workflow_id>>"
+            curl --request POST \
+              --url https://circleci.com/api/v2/workflow/<<parameters.workflow_id>>/cancel \
+              --header "Circle-Token: ${CIRCLE_TOKEN}"
+            fi
+  scan:
+    description: >
+      Detect bugs and vulnerabilities using sonar scanner
+      Requires a sonarcloud account where report is posted
+      with the same projectKey
+    parameters:
+      cache_version:
+        default: 1
+        description: increment this value if the cache is corrupted and you want to start with a clean cache
+        type: integer
+      project_root:
+        default: .
+        description: the root of the project that should be analyzed (relative to the root directory of the repository)
+        type: string
+      exclusions:
+        type: string
+        default: "**/*.yaml,**/*.yml"
+      host_url:
+        type: string
+        default: $SONARQUBE_SERVER_URL
+      sources:
+        type: string
+        default: "."
+      runner_opts:
+        type: string
+        default: "-Xms1024m"
+      projectKey:
+        type: string
+        default: "circle-cicd-pipeline"
+      organization:
+        type: string
+        default: $SONARQUBE_SERVER_ORG
+    steps:
+      - run:
+          command: mkdir -p /tmp/cache/scanner
+          name: Create cache directory if it doesn't exist
+      - restore_cache:
+          keys:
+            - v<<parameters.cache_version>>-sonarcloud-scanner-4.7.0.2747
+      - run:
+          name: SonarCloud
+          command: |
+            set -e
+            VERSION=4.7.0.2747
+            SCANNER_DIRECTORY=/tmp/cache/scanner
+            export SONAR_USER_HOME=$SCANNER_DIRECTORY/.sonar
+            OS="linux"
+            echo $SONAR_USER_HOME
 
-              if [[ ! -x "$SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner" ]]; then
-                curl -Ol https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$VERSION-$OS.zip
-                unzip -qq -o sonar-scanner-cli-$VERSION-$OS.zip -d $SCANNER_DIRECTORY
-              fi
+            export SONAR_RUNNER_OPTS="<< parameters.runner_opts >>"
 
-              chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
-              chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/jre/bin/java
+            if [[ ! -x "$SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner" ]]; then
+              curl -Ol https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$VERSION-$OS.zip
+              unzip -qq -o sonar-scanner-cli-$VERSION-$OS.zip -d $SCANNER_DIRECTORY
+            fi
 
-              cd <<parameters.project_root>>
-              $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
-              -Dsonar.organization=<< parameters.organization >> \
-              -Dsonar.projectKey=<< parameters.projectKey >> \
-              -Dsonar.host.url=<< parameters.host_url >> \
-              -Dsonar.login=$SONAR_TOKEN \
-              -Dsonar.projectBaseDir=<< parameters.project_root >> \
-              -Dsonar.sources=<< parameters.sources >> \
-              -Dsonar.exclusions="<< parameters.exclusions >>"                  
-        - save_cache:
-            key: v<<parameters.cache_version>>-sonarcloud-scanner-4.7.0.2747
-            paths: /tmp/cache/scanner
+            chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
+            chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/jre/bin/java
+
+            cd <<parameters.project_root>>
+            $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner \
+            -Dsonar.organization=<< parameters.organization >> \
+            -Dsonar.projectKey=<< parameters.projectKey >> \
+            -Dsonar.host.url=<< parameters.host_url >> \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.projectBaseDir=<< parameters.project_root >> \
+            -Dsonar.sources=<< parameters.sources >> \
+            -Dsonar.exclusions="<< parameters.exclusions >>"                  
+      - save_cache:
+          key: v<<parameters.cache_version>>-sonarcloud-scanner-4.7.0.2747
+          paths: /tmp/cache/scanner
+
+# AWS CLI v2           
+# Could use the Orb circleci/aws-cli@3.1.1
+# Best to know which commands are executed if you are security aware
+# You also reduce the overheads of a generic Orb
+  install_aws:
+    description: Install the AWS CLI via Pip if not already installed.
+    parameters:
+      binary-dir:
+        default: /usr/local/bin
+        description: >
+          The main aws program in the install directory is symbolically linked to
+          the file aws in the specified path. Defaults to /usr/local/bin
+        type: string
+      install-dir:
+        default: /usr/local/aws-cli
+        description: >
+          Specify the installation directory of AWS CLI. Defaults to
+          /usr/local/aws-cli
+        type: string
+    steps:
+      - run:
+          command: |
+            curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64$1.zip" -o "awscliv2.zip"
+            unzip -q -o awscliv2.zip
+            sudo ./aws/install -i "${PARAM_AWS_CLI_INSTALL_DIR}" -b "${PARAM_AWS_CLI_BINARY_DIR}"
+            rm -r awscliv2.zip ./aws
+          environment:
+            PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
+            PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
+          name: Install AWS CLI v2
+  setup_aws:
+    description: Setup AWS CLI v2.
+    steps:
+      - run:
+          command: >
+            PARAM_AWS_CLI_ACCESS_KEY_ID=$(eval echo
+            "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
+
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY=$(eval echo
+            "\$$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+
+            PARAM_AWS_CLI_REGION=$(eval echo "\$$PARAM_AWS_CLI_REGION")
+
+
+            aws configure set aws_access_key_id \
+                "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
+                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+
+            aws configure set aws_secret_access_key \
+                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
+                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+            aws configure set default.region "$PARAM_AWS_CLI_REGION" \
+                --profile "$PARAM_AWS_CLI_PROFILE_NAME
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+            PARAM_AWS_CLI_PROFILE_NAME: $AWS_CLI_PROFILE_NAME
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+          name: Configure AWS Access Key ID
+  stack_status:
+    description: Check status of stack updates
+    steps:
+      - run:
+          name: Stack Status 
+          command: |
+            while [ 1 ]   # Endless loop.
+            do
+                stack_Status=$(aws cloudformation describe-stacks \
+                    --stack-name $CFN_STACKS \
+                    --output text --query "Stacks[0].StackStatus")
+                echo "Stack Status: $stack_Status"
+                if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
+                    echo "Exiting stack status: $stack_Status"
+                    exit 0
+                elif [[ $stack_Status == "CREATE_FAILED" || $stack_Status == "ROLLBACK_IN_PROGRESS" || $stack_Status == "ROLLBACK_COMPLETE" || $stack_Status == "UPDATE_ROLLBACK_COMPLETE" || $stack_Status == "DELETE_IN_PROGRESS" ]]; then
+                    echo "Exiting stack status: $stack_Status"
+                    exit 1
+                fi
+                sleep 5
+            done
+# 
 defaults: &defaults
   docker:
     - image: circleci/node:13.8.0
@@ -354,39 +439,49 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
-#   deploy-infrastructure:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Ensure back-end infrastructure exists
-#           command: |
-#             aws cloudformation deploy \
-#               --template-file .circleci/files/backend.yml \
-#               #--tags project=your-tag \
-#               # --stack-name "your back-end stack name with workflow id" \
-#               # --parameter-overrides ID="your workflow id"  
-#               exit 1
-#       - run:
-#           name: Ensure front-end infrastructure exist
-#           command: |
-#             aws cloudformation deploy \
-#               --template-file .circleci/files/frontend.yml \
-#               #--tags project=your-tag \
-#               # --stack-name "your front-end stack name with workflow id" \
-#               # --parameter-overrides ID="your workflow id"  
-#               exit 1
-#       - run:
-#           name: Add back-end ip to ansible inventory
-#           command: |
-#             # Your code here
-#             exit 1
-#       - persist_to_workspace:
-#           root: ~/
-#           paths:
-#             - project/.circleci/ansible/inventory.txt
-#       # Here's where you will add some code to rollback on failure      
+  deploy-infrastructure:
+    docker:
+      - image: cimg/python:3.9.13-node
+    steps:
+      - install_aws
+      - setup_aws
+      - checkout
+      # - run:
+      #     name: Upload templates to S3 
+      #     command: |
+      #       aws cloudformation package --template-file \
+      #         .circleci/files/stacks_v1.yaml \
+      #         --s3-bucket $CFN_BUCKET \
+      #         --output-template-file .circleci/files/stacks_v1-packaged.yaml
+            
+      #       aws cloudformation package --template-file \
+      #         .circleci/files/stacks_v2.yaml \
+      #         --s3-bucket $CFN_BUCKET \
+      #         --output-template-file .circleci/files/stacks_v2-packaged.yaml \
+      - run:
+          name: Setup back-end infrastructure
+          command: |
+            change_set_ID=$(aws cloudformation create-change-set \
+              --stack-name $CFN_STACKS \
+              --template-body .circleci/files/stacks_v1-packaged.yaml \
+              --change-set-name deploy-backend \
+              --change-set-type UPDATE \  
+              --capabilities $AWS_IAM \
+              --output text --query "Id") 
+            echo $change_set_ID
+      - stack_status
+      - run:
+          name: Setup frontend infrastructure 
+          command: |
+            change_set_ID=$(aws cloudformation create-change-set \
+              --stack-name $CFN_STACKS \
+              --template-body .circleci/files/stacks_v2-packaged.yaml \
+              --change-set-name deploy-backend \
+              --change-set-type UPDATE \  
+              --capabilities $AWS_IAM \
+              --output text --query "Id")
+            echo $change_set_ID
+      - stack_status
 
 #   configure-infrastructure:
 #     docker:
@@ -572,11 +667,15 @@ workflows:
           requires: 
             - build-frontend
             - build-backend
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [test-feature-branch]
+      - deploy-infrastructure:
+          requires: 
+            - test-frontend
+            - test-backend
+            - scan-frontend
+            - scan-backend
+          context:
+            - org-global
+            - aws-context
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
       # - run-migrations:
