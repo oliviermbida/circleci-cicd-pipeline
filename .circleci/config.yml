@@ -464,13 +464,13 @@ jobs:
       - run:
           name: Setup back-end infrastructure
           command: |
-            aws s3 ls
             change_set_ID=$(aws cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v1-packaged.yaml \
               --change-set-name deploy-backend \
               --change-set-type UPDATE \  
               --capabilities $AWS_IAM \
+              --profile $AWS_CLI_PROFILE_NAME \
               --output text --query "Id") 
             echo $change_set_ID
       - stack_status
