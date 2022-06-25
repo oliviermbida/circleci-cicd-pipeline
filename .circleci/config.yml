@@ -467,13 +467,12 @@ jobs:
           command: |
             # usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
 
-            change_set_ID=$(aws --output text cloudformation create-change-set \
+            change_set_ID= "jq '.Id' <(aws --output text cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v1-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
-              --change-set-type UPDATE \  
-              | jq '.Id') 
+              --change-set-type UPDATE )"
             echo $change_set_ID
       - stack_status
       - run:
