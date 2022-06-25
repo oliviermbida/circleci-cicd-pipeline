@@ -257,9 +257,9 @@ commands:
           command: |
             while [ 1 ]   # Endless loop.
             do
-                stack_Status=$(aws --output text cloudformation describe-stacks \
-                    --stack-name $CFN_STACKS \
-                    | jq -r ."StackStatus")
+                output=$(aws --output text cloudformation describe-stacks \
+                    --stack-name $CFN_STACKS)
+                stack_Status=$( jq -r  '.StackStatus' <<< "${output}" )
                 echo "Stack Status: $stack_Status"
                 if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
                     echo "Exiting stack status: $stack_Status"
@@ -467,24 +467,25 @@ jobs:
           command: |
             # usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
 
-            change_set_ID= "jq '.Id' <(aws --output text cloudformation create-change-set \
+            output=$(aws --output text cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v1-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
-              --change-set-type UPDATE )"
+              --change-set-type UPDATE )
+            change_set_ID=$( jq -r  '.Id' <<< "${output}" )
             echo $change_set_ID
       - stack_status
       - run:
           name: Setup frontend infrastructure 
           command: |
-            change_set_ID=$(aws --output text cloudformation create-change-set \
+            output=$(aws --output text cloudformation create-change-set \
               --stack-name $CFN_STACKS \
-              --template-body .circleci/files/stacks_v2-packaged.yaml \
+              --template-body .circleci/files/stacks_v1-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
-              --change-set-type UPDATE \  
-              | jq '.Id') 
+              --change-set-type UPDATE )
+            change_set_ID=$( jq -r  '.Id' <<< "${output}" )
             echo $change_set_ID
       - stack_status
 
