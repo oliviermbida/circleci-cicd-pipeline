@@ -282,7 +282,7 @@ commands:
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
-                    --change-set-name <<parameters.name>> --stack-name $CFN_STACKS)
+                    --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
                 echo "Change Status: $change_Status"
                 if [[ $change_Status == "CREATE_COMPLETE" ]]; then
                     echo "Exiting change-set status: $change_Status"
