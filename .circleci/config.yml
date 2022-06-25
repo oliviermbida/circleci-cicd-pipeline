@@ -212,6 +212,7 @@ commands:
             unzip -q -o awscliv2.zip
             sudo ./aws/install -i "${PARAM_AWS_CLI_INSTALL_DIR}" -b "${PARAM_AWS_CLI_BINARY_DIR}"
             rm -r awscliv2.zip ./aws
+
             aws --version
           environment:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
@@ -256,9 +257,9 @@ commands:
           command: |
             while [ 1 ]   # Endless loop.
             do
-                stack_Status=$(aws cloudformation describe-stacks \
+                stack_Status=$(aws --output text cloudformation describe-stacks \
                     --stack-name $CFN_STACKS \
-                    --output text --query "Stacks[0].StackStatus")
+                    | jq -r ."StackStatus")
                 echo "Stack Status: $stack_Status"
                 if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
                     echo "Exiting stack status: $stack_Status"
@@ -464,25 +465,27 @@ jobs:
       - run:
           name: Setup back-end infrastructure
           command: |
-            change_set_ID=$(aws cloudformation create-change-set \
+            # usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
+
+            change_set_ID=$(aws --output text cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v1-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE \  
-              --output text --query "Id") 
+              | jq '.Id') 
             echo $change_set_ID
       - stack_status
       - run:
           name: Setup frontend infrastructure 
           command: |
-            change_set_ID=$(aws cloudformation create-change-set \
+            change_set_ID=$(aws --output text cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v2-packaged.yaml \
+              --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE \  
-              --capabilities $AWS_IAM \
-              --output text --query "Id")
+              | jq '.Id') 
             echo $change_set_ID
       - stack_status
 
