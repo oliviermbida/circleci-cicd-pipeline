@@ -464,6 +464,7 @@ jobs:
       - run:
           name: Setup back-end infrastructure
           command: |
+            aws s3 ls
             change_set_ID=$(aws cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body .circleci/files/stacks_v1-packaged.yaml \
