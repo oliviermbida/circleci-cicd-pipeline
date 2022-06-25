@@ -269,6 +269,30 @@ commands:
                 fi
                 sleep 5
             done
+  change_status:
+    description: Wait for changes status CREATE_COMPLETE. 
+    parameters: 
+      name:
+        description: Name of stack change set
+        type: string
+    steps:
+      - run:
+          name: Change-set Status 
+          command: |
+            while [ 1 ]   # Endless loop.
+            do
+                change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
+                    --change-set-name <<parameters.name>> --stack-name $CFN_STACKS)
+                echo "Change Status: $change_Status"
+                if [[ $change_Status == "CREATE_COMPLETE" ]]; then
+                    echo "Exiting change-set status: $change_Status"
+                    exit 0
+                elif [[ $change_Status == "FAILED" || $change_Status == "CREATE_IN_PROGRESS" change_Status == "DELETE_IN_PROGRESS" ]]; then
+                    echo "Exiting change-set status: $change_Status"
+                    exit 1
+                fi
+                sleep 5
+            done
 # 
 defaults: &defaults
   docker:
@@ -462,10 +486,8 @@ jobs:
       #         --s3-bucket $CFN_BUCKET \
       #         --output-template-file file://.circleci/files/stacks_v2-packaged.yaml \
       - run:
-          name: Setup back-end infrastructure
+          name: Changes for backend infrastructure 
           command: |
-            # usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
-
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name $CFN_STACKS \
               --template-body file://.circleci/files/stacks_v1-packaged.yaml \
@@ -473,12 +495,15 @@ jobs:
               --change-set-name deploy-backend \
               --change-set-type UPDATE )
             echo $change_set_ID
-            # wait for change-set status CREATE_COMPLETE. Could check events here to make sure.
-            sleep 5  
+      - change_status:
+          name: deploy-backend
+      - run:
+          name: Setup backend infrastructure 
+          command: |
             aws cloudformation execute-change-set --change-set-name deploy-backend --stack-name $CFN_STACKS
       - stack_status
       - run:
-          name: Setup frontend infrastructure 
+          name: Changes for frontend infrastructure 
           command: |
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name $CFN_STACKS \
@@ -487,8 +512,11 @@ jobs:
               --change-set-name deploy-frontend \
               --change-set-type UPDATE )
             echo $change_set_ID
-            # wait for change-set status CREATE_COMPLETE. Could check events here to make sure.
-            sleep 5  
+      - change_status:
+          name: deploy-frontend
+      - run:
+          name: Setup frontend infrastructure 
+          command: |
             aws cloudformation execute-change-set --change-set-name deploy-frontend --stack-name $CFN_STACKS
       - stack_status
 
