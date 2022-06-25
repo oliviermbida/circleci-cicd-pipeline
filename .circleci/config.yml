@@ -287,7 +287,7 @@ commands:
                 if [[ $change_Status == "CREATE_COMPLETE" ]]; then
                     echo "Exiting change-set status: $change_Status"
                     exit 0
-                elif [[ $change_Status == "FAILED" || $change_Status == "CREATE_IN_PROGRESS" change_Status == "DELETE_IN_PROGRESS" ]]; then
+                elif [[ $change_Status == "FAILED" || $change_Status == "CREATE_IN_PROGRESS" || $change_Status == "DELETE_IN_PROGRESS" ]]; then
                     echo "Exiting change-set status: $change_Status"
                     exit 1
                 fi
