@@ -3,6 +3,11 @@ orbs:
   jira: circleci/jira@1.3.1
   slack: circleci/slack@4.10.1
 
+# parameters:
+#   run_integration_tests:
+#     type: boolean
+#     default: false
+
 commands:
 #   destroy-environment:
 #     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -34,6 +39,46 @@ commands:
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
+  commit_to_github:
+    description: Commit to github
+    parameters:
+      commit_message:
+        type: string
+        default: "NO_BUILD Auto commit from CircleCI [skip ci]"
+    steps: 
+      # - checkout
+      # For a self-hosted runner, ensure that you have an ssh-agent on your system 
+      # to successfully use the add_ssh_keys step. 
+      # The SSH key is written to $HOME/.ssh/id_rsa_<fingerprint>, 
+      # where $HOME is the home directory of the user configured to execute jobs, 
+      # and <fingerprint> is the fingerprint of the key. 
+      # A host entry is also appended to $HOME/.ssh/config, 
+      # along with a relevant IdentityFile option to use the key.
+      - add_ssh_keys:
+          fingerprints:
+            - "<copy-paste-fingerprint-here>"
+      - run:
+          name: Commit to GitHub
+          command: |
+            if [[ "${CIRCLE_USERNAME}" = $USER_NAME && -z "${CIRCLE_PULL_REQUEST}" ]]
+            then
+              printf "%s" 'github.com ssh-rsa <copy-paste-fingerprint-here>
+              ' >> "$HOME/.ssh/known_hosts"
+
+              export GIT_SSH_COMMAND='ssh -i "$HOME/.ssh/id_rsa" -o UserKnownHostsFile="$HOME/.ssh/known_hosts"'
+              echo "Committing to GitHub"
+
+              # use git+ssh instead of https
+              git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
+              git config --global gc.auto 0 || true
+              git config user.email $USER_EMAIL
+              git config user.name $USER_NAME
+              git checkout master
+              git commit --allow-empty -am <<parameters.commit_message>>
+              git push origin master
+            else
+              echo "No commit to GitHub"
+            fi
   revert-commit:
     description: To revert a commit on fail , it needs to have a REVERT trigger in commit message
     parameters:
@@ -41,6 +86,11 @@ commands:
         type: string
     steps: 
       # - checkout
+      # - add_ssh_keys:
+      #     fingerprints:
+      #       - "<copy-paste-fingerprint-here>"
+
+      # SSH_CONFIG_DIR='/home/circleci/.ssh'
       - run: 
           name: Revert last commit on fail
           command: |
@@ -290,6 +340,16 @@ commands:
                 fi
                 sleep 5
             done
+  check_master:
+    description: Stop job if not master branch but continue with other jobs in pipeline          
+    steps:        
+      - run: 
+          name: Check if master 
+          command: |
+            # If condition is true stop this job but continue with others jobs in the pipeline
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+                circleci-agent step halt
+            fi
 # 
 defaults: &defaults
   docker:
@@ -300,6 +360,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - check_master
       - restore_cache:
           keys: 
             - v1-frontend-build-{{ checksum "./frontend/package-lock.json" }}
@@ -326,6 +387,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - check_master
       - restore_cache:
           keys:
             - v1-backend-build-{{ checksum "./backend/package-lock.json" }}
@@ -352,10 +414,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run: |
-          if [ "$CIRCLE_BRANCH" != "master" ]; then
-              circleci-agent step halt
-          fi
+      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -383,10 +442,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run: |
-          if [ "$CIRCLE_BRANCH" != "master" ]; then
-              circleci-agent step halt
-          fi
+      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -414,6 +470,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -427,6 +484,9 @@ jobs:
             npm install 
             #npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
+# Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
+      # - commit_to_github:
+      #     commit_message: "NO_BUILD [skip ci] Pipeline frontend audit fix"
       # - jira/notify
       - slack/notify:
           event: fail
@@ -435,6 +495,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -448,6 +509,9 @@ jobs:
             npm install
             #npm audit --audit-level=critical 
             npm audit fix --audit-level=critical --force
+# Will be a good idea to commit the audit fix. This should be run by authorize $USER_NAME. 
+      # - commit_to_github:
+      #     commit_message: "NO_BUILD [skip ci] backend audit fix"
       # - jira/notify
       - slack/notify:
           event: fail
@@ -456,6 +520,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - check_master
       - scan:
           project_root: .
       # Restore from cache
@@ -470,6 +535,7 @@ jobs:
       - install_aws
       - setup_aws
       - checkout
+      - check_master
       # - run:
       #     name: Upload templates to S3 
       #     command: |
@@ -516,7 +582,40 @@ jobs:
           command: |
             aws cloudformation execute-change-set --change-set-name deploy-frontend --stack-name $CFN_STACKS
       - stack_status
+#       - run:
+#           name: Add back-end ip to ansible inventory
+#           command: |
+#             # Your code here
+#             exit 1
+#       - persist_to_workspace:
+#           root: ~/
+#           paths:
+#             - project/.circleci/ansible/inventory.txt
 
+# Here's where you will add some code to rollback on failure
+# ----------------------------------------------------------
+# stack_status commands above exits on failure notify concern individuals here.
+# Cloudformation is set to automatically rollback to last succesfull update.
+# You can execute a rollback here with the commands below but
+# it will be better to deal with cloudformation rollbacks at AWS end 
+# to avoid an endless loop checking on AWS stack events.
+      # - run:
+      #     name: Rollback frontend and backend deployed infrastructure 
+      #     command: |
+      #       change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set --stack-name $CFN_STACKS \
+      #       --template-body file://.circleci/files/stacks-packaged.yaml --capabilities $AWS_IAM  \
+      #       --change-set-name rollback-deploy --change-set-type UPDATE)
+      #       echo $change_set_ID
+      # - change_status:
+      #     changename: rollback-deploy
+      # - run:
+      #     name: Remove deployed infrastructure 
+      #     command: |
+      #       aws cloudformation execute-change-set --change-set-name rollback-deploy --stack-name $CFN_STACKS
+      # - stack_status
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
 #   configure-infrastructure:
 #     docker:
 #       # Docker image here that supports Ansible
@@ -735,3 +834,33 @@ workflows:
             branches:
               only:
                 - master
+  # integration_tests:
+  #   when: << pipeline.parameters.run_integration_tests >>
+  #   jobs:
+  #     - build-frontend
+  #     - build-backend
+  #     - deploy-infrastructure:
+  #         requires: 
+  #           - build-frontend
+  #           - build-backend
+  #         context:
+  #           - org-global
+  #           - aws-context
+  #     - configure-infrastructure:
+  #         requires: 
+  #           - deploy-infrastructure
+  #     - run-migrations:
+  #         requires: 
+  #           - configure-infrastructure
+  #     - deploy-frontend:
+  #         requires: 
+  #           - run-migrations
+  #     - deploy-backend:
+  #         requires: 
+  #           - run-migrations
+  #     - cloudfront-update:
+  #         requires: 
+  #         - run-migrations
+  #     - cleanup:
+  #         requires: 
+  #           - cloudfront-update
