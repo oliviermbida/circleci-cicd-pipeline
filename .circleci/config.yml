@@ -259,7 +259,7 @@ commands:
             do
                 output=$(aws --output text cloudformation describe-stacks \
                     --stack-name $CFN_STACKS)
-                stack_Status=$( jq -r  '.StackStatus' <<< "${output}" )
+                stack_Status=$( jq -r  '.StackStatus' \\<<< "${output}" )
                 echo "Stack Status: $stack_Status"
                 if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
                     echo "Exiting stack status: $stack_Status"
@@ -473,7 +473,7 @@ jobs:
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE )
-            change_set_ID=$( jq -r  '.Id' <<< "${output}" )
+            change_set_ID=$( jq -r  '.Id' \\<<< "${output}" )
             echo $change_set_ID
       - stack_status
       - run:
@@ -485,7 +485,7 @@ jobs:
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE )
-            change_set_ID=$( jq -r  '.Id' <<< "${output}" )
+            change_set_ID=$( jq -r  '.Id' \\<<< "${output}" )
             echo $change_set_ID
       - stack_status
 
