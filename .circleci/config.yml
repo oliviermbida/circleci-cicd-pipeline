@@ -272,7 +272,7 @@ commands:
   change_status:
     description: Wait for changes status CREATE_COMPLETE. 
     parameters: 
-      name:
+      changename:
         description: Name of stack change set
         type: string
     steps:
@@ -496,7 +496,7 @@ jobs:
               --change-set-type UPDATE )
             echo $change_set_ID
       - change_status:
-          name: deploy-backend
+          changename: deploy-backend
       - run:
           name: Setup backend infrastructure 
           command: |
@@ -513,7 +513,7 @@ jobs:
               --change-set-type UPDATE )
             echo $change_set_ID
       - change_status:
-          name: deploy-frontend
+          changename: deploy-frontend
       - run:
           name: Setup frontend infrastructure 
           command: |
