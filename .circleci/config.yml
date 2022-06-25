@@ -453,14 +453,14 @@ jobs:
       #     name: Upload templates to S3 
       #     command: |
       #       aws cloudformation package --template-file \
-      #         .circleci/files/stacks_v1.yaml \
+      #         file://.circleci/files/stacks_v1.yaml \
       #         --s3-bucket $CFN_BUCKET \
       #         --output-template-file .circleci/files/stacks_v1-packaged.yaml
             
       #       aws cloudformation package --template-file \
       #         .circleci/files/stacks_v2.yaml \
       #         --s3-bucket $CFN_BUCKET \
-      #         --output-template-file .circleci/files/stacks_v2-packaged.yaml \
+      #         --output-template-file file://.circleci/files/stacks_v2-packaged.yaml \
       - run:
           name: Setup back-end infrastructure
           command: |
@@ -468,7 +468,7 @@ jobs:
 
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name $CFN_STACKS \
-              --template-body .circleci/files/stacks_v1-packaged.yaml \
+              --template-body file://.circleci/files/stacks_v1-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE )
@@ -479,7 +479,7 @@ jobs:
           command: |
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name $CFN_STACKS \
-              --template-body .circleci/files/stacks_v2-packaged.yaml \
+              --template-body file://.circleci/files/stacks_v2-packaged.yaml \
               --capabilities $AWS_IAM \
               --change-set-name deploy-backend \
               --change-set-type UPDATE )
