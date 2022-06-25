@@ -212,6 +212,7 @@ commands:
             unzip -q -o awscliv2.zip
             sudo ./aws/install -i "${PARAM_AWS_CLI_INSTALL_DIR}" -b "${PARAM_AWS_CLI_BINARY_DIR}"
             rm -r awscliv2.zip ./aws
+            aws --version
           environment:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
@@ -237,8 +238,10 @@ commands:
             aws configure set aws_secret_access_key \
                 "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
                 --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+
             aws configure set default.region "$PARAM_AWS_CLI_REGION" \
-                --profile "$PARAM_AWS_CLI_PROFILE_NAME
+                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+                
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
             PARAM_AWS_CLI_PROFILE_NAME: $AWS_CLI_PROFILE_NAME
@@ -329,7 +332,7 @@ jobs:
     steps:
       - checkout
       - run: |
-          if [ "$CIRCLE_BRANCH" = "develop" ]; then
+          if [ "$CIRCLE_BRANCH" != "master" ]; then
               circleci-agent step halt
           fi
       # Restore from cache
@@ -360,7 +363,7 @@ jobs:
     steps:
       - checkout
       - run: |
-          if [ "$CIRCLE_BRANCH" = "develop" ]; then
+          if [ "$CIRCLE_BRANCH" != "master" ]; then
               circleci-agent step halt
           fi
       # Restore from cache
