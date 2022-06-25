@@ -489,7 +489,7 @@ jobs:
             echo $change_set_ID
             # wait for change-set status CREATE_COMPLETE. Could check events here to make sure.
             sleep 5  
-            aws cloudformation execute-change-set --change-set-name deploy-backend --stack-name $CFN_STACKS
+            aws cloudformation execute-change-set --change-set-name deploy-frontend --stack-name $CFN_STACKS
       - stack_status
 
 #   configure-infrastructure:
