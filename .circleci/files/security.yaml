@@ -1,0 +1,97 @@
+Description: >
+  UdaPeople Security Stack. Must be run by an admin IAM user.
+
+Parameters:
+  WorkflowID:
+    Description: Unique identifier.
+    Type: String
+    Default: cli803394216630
+
+Resources: 
+# SSM Parameters
+  SSMParameterEC2Host:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: udapeoleDB-Port
+      Type: String 
+      Value: '5432'
+# S3 Bucket Policy
+  # WebsiteBucketPolicy:
+  #   Type: AWS::S3::BucketPolicy
+  #   Properties:
+  #     Bucket: !Sub "udapeoples3-${WorkflowID}"
+  #     PolicyDocument:
+  #       Statement:
+  #       - Sid: PublicReadForGetBucketObjects
+  #         Effect: Allow
+  #         Principal: '*'
+  #         Action: s3:GetObject
+  #         Resource: !Sub 'arn:aws:s3::${AWS::Account}:udapeoples3-${WorkflowID}'
+# EC2 Service Role
+  EC2ServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+      Policies:
+        - PolicyName: ec2policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AllowResourceActions
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - logs:*
+                Resource: '*'
+      Path: /
+      RoleName: udapeopleec2role
+
+# RDS Service Role
+  RDSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service:
+                - rds.amazonaws.com
+      Policies:
+        - PolicyName: rdspolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AccessResourceActions
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - logs:*
+                  - ec2:*
+                Resource: '*'
+      Path: /
+      RoleName: udapeoplerdsrole
+
+# EC2 Security Group
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub 'udapeopleSG-${WorkflowID}'
+      GroupDescription: Allow port 22 and port 5432.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0

@@ -1,0 +1,52 @@
+Description: >
+  UdaPeople top level Stack Update version 3.
+  S3 Bucket Policy attachment. Must be run by an admin IAM user. 
+Parameters:
+  WorkflowID:
+    Description: Unique identifier.
+    Type: String
+    Default: cli803394216630
+Resources: 
+  compliance:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: security_v1.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-compliance-${WorkflowID}'
+  rdspostgres:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      TemplateURL: rds.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-rdspostgres-${WorkflowID}'
+  ec2backend:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      TemplateURL: backend.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-backend-${WorkflowID}'
+  s3frontend:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      TemplateURL: frontend.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-frontend-${WorkflowID}'
+  cdn:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - s3frontend
+    Properties:
+      TemplateURL: cloudfront.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-cloudfront-${WorkflowID}'

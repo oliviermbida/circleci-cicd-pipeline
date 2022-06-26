@@ -1,0 +1,23 @@
+Description: >
+  UdaPeople frontend stack.
+
+Parameters:
+  WorkflowID:
+    Description: Unique identifier.
+    Type: String
+    Default: cli803394216630
+
+Resources:
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "udapeoples3-${WorkflowID}"
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: 404.html
+
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Description: URL for website hosted on S3
