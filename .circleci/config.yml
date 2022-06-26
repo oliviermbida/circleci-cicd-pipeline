@@ -39,6 +39,16 @@ commands:
 #             #  Add revert code here. You can find this in the Getting Started section.
 #               exit 1
 #             fi
+  check_master:
+    description: Stop job if not master branch but continue with other jobs in pipeline          
+    steps:        
+      - run: 
+          name: Check if master 
+          command: |
+            # If condition is true stop this job but continue with others jobs in the pipeline
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+                circleci-agent step halt
+            fi
   commit_to_github:
     description: Commit to github
     parameters:
@@ -140,7 +150,7 @@ commands:
             #  --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel \
             #  --header "Circle-Token: ${CIRCLE_TOKEN}"
             fi           
-
+# Similar to [skip ci] or [ci skip] in commit message
   cancel-workflow:
     description: Cancel workflow given a commit message to stop it being run automatically
     parameters:
@@ -268,11 +278,28 @@ commands:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
-  setup_aws:
+  configure_aws:
     description: Setup AWS CLI v2.
+    parameters:
+      access_key_id: 
+        type: string
+        description: AWS access key Id
+        default: $AWS_ACCESS_KEY_ID
+      secret_access_key: 
+        type: string
+        description: AWS secret access key
+        default: $AWS_SECRET_ACCESS_KEY
+      profile_name: 
+        type: string
+        description: AWS CLI profile name
+        default: $AWS_CLI_PROFILE_NAME
+      region: 
+        type: string
+        description: AWS default region
+        default: $AWS_DEFAULT_REGION
     steps:
       - run:
-          command: >
+          command: |
             PARAM_AWS_CLI_ACCESS_KEY_ID=$(eval echo
             "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
 
@@ -294,13 +321,17 @@ commands:
                 --profile "$PARAM_AWS_CLI_PROFILE_NAME"
                 
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-            PARAM_AWS_CLI_PROFILE_NAME: $AWS_CLI_PROFILE_NAME
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
+            PARAM_AWS_CLI_REGION: <<parameters.region>>
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
           name: Configure AWS Access Key ID
   stack_status:
     description: Check status of stack updates
+    parameters: 
+      stackname:
+        description: Name of stack 
+        type: string
     steps:
       - run:
           name: Stack Status 
@@ -308,7 +339,7 @@ commands:
             while [ 1 ]   # Endless loop.
             do
                 stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
-                    --stack-name $CFN_STACKS)
+                    --stack-name <<parameters.stackname>>)
                 echo "Stack Status: $stack_Status"
                 if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
                     echo "Exiting stack status: $stack_Status"
@@ -340,16 +371,94 @@ commands:
                 fi
                 sleep 5
             done
-  check_master:
-    description: Stop job if not master branch but continue with other jobs in pipeline          
-    steps:        
-      - run: 
-          name: Check if master 
+  create_changes:
+    description: Create stack infrasturcture changes 
+    parameters:
+      stackname:
+        description: Name of stack 
+        type: string
+        default: $CFN_STACKS
+      s3bucket:
+        description: Name of S3 bucket to store cloudformation artifacts 
+        type: string
+        default: $CFN_BUCKET
+      changename:
+        description: Name of stack change set
+        type: string 
+      version:
+        description: Template version
+        type: string 
+      capabilities:
+        description: IAM user 
+        type: string
+        default: $AWS_IAM   
+      type:
+        description: Type of change 
+        type: string
+        default: UPDATE      
+    steps:
+      - run:
+          name: Upload templates to S3 
           command: |
-            # If condition is true stop this job but continue with others jobs in the pipeline
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-                circleci-agent step halt
-            fi
+            aws cloudformation package --template-file \
+              file://.circleci/files/stacks_v<<parameters.version>>.yaml \
+              --s3-bucket <<parameters.s3bucket>> \
+              --output-template-file .circleci/files/stacks_v<<parameters.version>>-packaged.yaml
+      - run: 
+          name: Wait for local packaged file
+          command: |
+            # Wait for local file
+            while [ ! -f ".circleci/files/stacks_v<<parameters.version>>-packaged.yaml" ] ; do
+              echo "..."
+            done        
+      - run:
+          name: Apply <<parameters.changename>> changes
+          command: |
+            change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
+              --stack-name <<parameters.stackname>> \
+              --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
+              --capabilities <<parameters.capabilities>> \
+              --change-set-name <<parameters.changename>> \
+              --change-set-type <<parameters.type>> )
+            # echo $change_set_ID
+      - change_status:
+          changename: <<parameters.changename>>
+      - run:
+          name: Setup <<parameters.changename>> infrastructure 
+          command: |
+            aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
+      - stack_status:
+          stackname: <<parameters.stackname>>
+  security_changes:
+    description: Create IAM roles and Security groups 
+    parameters:
+      stackname:
+        description: Name of stack 
+        type: string
+        default: $CFN_STACKS
+      changename:
+        description: Name of stack change set
+        type: string 
+      type:
+        description: Type of change 
+        type: string
+        default: UPDATE  
+      version:
+        description: Template version
+        type: string 
+    steps: 
+      # configure aws cli for admin users 
+      - configure_aws:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          profile_name: $ADMIN_USER_NAME        
+      - create_changes:
+          changename: <<parameters.changename>>
+          version: <<parameters.version>>
+          type: <<parameters.type>>
+    # when:
+    #   condition:
+    #     equal: [ $CIRCLE_USERNAME, $ADMIN_USER_NAME ]
 # 
 defaults: &defaults
   docker:
@@ -533,55 +642,37 @@ jobs:
       - image: cimg/python:3.9.13-node
     steps:
       - install_aws
-      - setup_aws
       - checkout
       - check_master
-      # - run:
-      #     name: Upload templates to S3 
-      #     command: |
-      #       aws cloudformation package --template-file \
-      #         file://.circleci/files/stacks_v1.yaml \
-      #         --s3-bucket $CFN_BUCKET \
-      #         --output-template-file .circleci/files/stacks_v1-packaged.yaml
-            
-      #       aws cloudformation package --template-file \
-      #         .circleci/files/stacks_v2.yaml \
-      #         --s3-bucket $CFN_BUCKET \
-      #         --output-template-file file://.circleci/files/stacks_v2-packaged.yaml \
-      - run:
-          name: Changes for backend infrastructure 
-          command: |
-            change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
-              --stack-name $CFN_STACKS \
-              --template-body file://.circleci/files/stacks_v1-packaged.yaml \
-              --capabilities $AWS_IAM \
-              --change-set-name deploy-backend \
-              --change-set-type UPDATE )
-            echo $change_set_ID
-      - change_status:
+
+      # security_changes : 
+      # This is run by an IAM user with admin role
+      # to setup priviledges required by other steps which are run by other IAM users
+      # for simplicity the progres database is also setup by compliance change-set.
+      # Ideally there should be another step after compliance change-set for database admin users
+      - security_changes:
+          stackname: $CFN_STACKS
+          changename: compliance
+          type: CREATE
+          version: "1.0"
+      # - database
+
+      # configure aws cli for other users e.g devops team and web developers (use default settings)
+      - configure_aws
+      - create_changes:
+          stackname: $CFN_STACKS
           changename: deploy-backend
-      - run:
-          name: Setup backend infrastructure 
-          command: |
-            aws cloudformation execute-change-set --change-set-name deploy-backend --stack-name $CFN_STACKS
-      - stack_status
-      - run:
-          name: Changes for frontend infrastructure 
-          command: |
-            change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
-              --stack-name $CFN_STACKS \
-              --template-body file://.circleci/files/stacks_v2-packaged.yaml \
-              --capabilities $AWS_IAM \
-              --change-set-name deploy-frontend \
-              --change-set-type UPDATE )
-            echo $change_set_ID
-      - change_status:
+          # type: UPDATE # default setting
+          version: "1.1"
+      - create_changes:
+          stackname: $CFN_STACKS
           changename: deploy-frontend
-      - run:
-          name: Setup frontend infrastructure 
-          command: |
-            aws cloudformation execute-change-set --change-set-name deploy-frontend --stack-name $CFN_STACKS
-      - stack_status
+          version: "1.2"
+      - security_changes:
+          stackname: $CFN_STACKS
+          changename: s3policy
+          type: UPDATE
+          version: "1.3"
 #       - run:
 #           name: Add back-end ip to ansible inventory
 #           command: |
@@ -594,35 +685,31 @@ jobs:
 
 # Here's where you will add some code to rollback on failure
 # ----------------------------------------------------------
-# stack_status commands above exits on failure notify concern individuals here.
-# Cloudformation is set to automatically rollback to last succesfull update.
+# create_changes command exits on failure notify concern individuals here.
+# Cloudformation is set to automatically rollback to last successfull update.
 # You can execute a rollback here with the commands below but
 # it will be better to deal with cloudformation rollbacks at AWS end 
 # to avoid an endless loop checking on AWS stack events.
-      # - run:
-      #     name: Rollback frontend and backend deployed infrastructure 
-      #     command: |
-      #       change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set --stack-name $CFN_STACKS \
-      #       --template-body file://.circleci/files/stacks-packaged.yaml --capabilities $AWS_IAM  \
-      #       --change-set-name rollback-deploy --change-set-type UPDATE)
-      #       echo $change_set_ID
-      # - change_status:
+      # - create_changes:
+      #     stackname: $CFN_STACKS
       #     changename: rollback-deploy
-      # - run:
-      #     name: Remove deployed infrastructure 
-      #     command: |
-      #       aws cloudformation execute-change-set --change-set-name rollback-deploy --stack-name $CFN_STACKS
-      # - stack_status
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      #     version: "1.0"  # rollback changes to security_changes and admin user can delete
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 #   configure-infrastructure:
 #     docker:
 #       # Docker image here that supports Ansible
 #     steps:
 #       # Checkout code from git
+        # - checkout
 #       # Add ssh keys with fingerprint
+      # - add_ssh_keys:
+      #     fingerprints:
+      #       - "<copy-paste-fingerprint-here>"
 #       # attach workspace
+      # - attach_workspace:
+      #     at: ~/
 #       - run:
 #           name: Install dependencies
 #           command: |
