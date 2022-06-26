@@ -399,10 +399,11 @@ commands:
       - run:
           name: Upload templates to S3 
           command: |
+            cd .circleci/files/
             aws cloudformation package --template-file \
-              file://.circleci/files/stacks_v<<parameters.version>>.yaml \
+              file://./stacks_v<<parameters.version>>.yaml \
               --s3-bucket <<parameters.s3bucket>> \
-              --output-template-file .circleci/files/stacks_v<<parameters.version>>-packaged.yaml
+              --output-template-file ./stacks_v<<parameters.version>>-packaged.yaml
       - run: 
           name: Wait for local packaged file
           command: |
