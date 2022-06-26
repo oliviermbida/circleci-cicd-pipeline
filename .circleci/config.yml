@@ -301,13 +301,11 @@ commands:
       - run:
           command: |
             # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo
-            "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
 
-            AWS_SECRET_ACCESS_KEY=$(eval echo
-            "\$$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
 
-            AWS_DEFAULT_REGION=$(eval echo "\$$PARAM_AWS_CLI_REGION")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
 
             aws configure set aws_access_key_id \
