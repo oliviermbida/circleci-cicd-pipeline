@@ -425,9 +425,9 @@ commands:
       - run:
           name: Upload templates to S3 
           command: |
-            AWS_ACCESS_KEY_ID=$(eval "$AWS_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval "$AWS_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval "$AWS_DEFAULT_REGION")
+            AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
