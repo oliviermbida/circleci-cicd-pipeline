@@ -308,7 +308,6 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-
             aws configure set aws_access_key_id \
                 "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
                 --profile "$PARAM_AWS_CLI_PROFILE_NAME"
@@ -326,7 +325,7 @@ commands:
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - persist_to_workspace:
-          root: ~/
+          root: $HOME
           paths:
             - .aws/credentials
             - .aws/config
@@ -414,7 +413,7 @@ commands:
         default: UPDATE      
     steps:
       - attach_workspace:
-          at: ~/
+          at: $HOME
       - run:
           name: Upload templates to S3 
           command: |
