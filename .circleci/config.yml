@@ -9,18 +9,49 @@ orbs:
 #     default: false
 
 commands:
-#   destroy-environment:
-#     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-#     parameters:
-#       # Add parameter here   
-#     steps:
-#       - run:
-#           name: Destroy environments
-#           when: on_fail
-#           command: |
-#             # Your code here
-#             exit 1
+  destroy-environment:
+    description: >
+      Destroy back-end and front-end cloudformation stacks given a workflow ID.
+      Can only be done by an Admin IAM user.
+    parameters:
+      workflow_id:
+        type: string
+        default: $CIRCLE_WORKFLOW_ID
+      access_key_id: 
+        type: string
+        description: AWS access key Id
+        default: $AWS_USER_ACCESS_KEY_ID
+      secret_access_key: 
+        type: string
+        description: AWS secret access key
+        default: $AWS_USER_SECRET_ACCESS_KEY
+      region: 
+        type: string
+        description: AWS default region
+        default: $AWS_DEFAULT_REGION
+      stackname:
+        description: Name of stack 
+        type: string
+        default: $CFN_STACKS
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+
+            # delete infrastructure
+            aws cloudformation delete-stack --stack-name <<parameters.stackname>>-<<parameters.workflow_id>>
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            PARAM_AWS_CLI_REGION: <<parameters.region>>
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
 #     parameters:
@@ -278,110 +309,15 @@ commands:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
-  # configure_aws:
-  #   description: Setup AWS CLI v2.
-  #   parameters:
-  #     access_key_id: 
-  #       type: string
-  #       description: AWS access key Id
-  #       default: $AWS_USER_ACCESS_KEY_ID
-  #     secret_access_key: 
-  #       type: string
-  #       description: AWS secret access key
-  #       default: $AWS_USER_SECRET_ACCESS_KEY
-  #     profile_name: 
-  #       type: string
-  #       description: AWS CLI profile name
-  #       default: $AWS_CLI_PROFILE_NAME
-  #     region: 
-  #       type: string
-  #       description: AWS default region
-  #       default: $AWS_DEFAULT_REGION
-  #   steps:
-  #     - run:
-  #         name: Configure AWS Access Key ID
-  #         command: |
-  #           # AWS CLI supported environment variables
-  #           AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-  #           AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-  #           AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-  #           aws configure set aws_access_key_id \
-  #               "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
-  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
-
-  #           aws configure set aws_secret_access_key \
-  #               "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
-  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
-
-  #           aws configure set default.region "$PARAM_AWS_CLI_REGION" \
-  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
-                
-  #         environment:
-  #           PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-  #           PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
-  #           PARAM_AWS_CLI_REGION: <<parameters.region>>
-  #           PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-  #     - persist_to_workspace:
-  #         root: ~/.aws
-  #         paths:
-  #           - credentials*
-  #           - config*
-  # stack_status:
-  #   description: Check status of stack updates
-  #   parameters: 
-  #     # user_role:
-  #     #   description: IAM user role
-  #     #   type: string
-  #     #   default: $AWS_CLI_PROFILE_NAME
-  #     stackname:
-  #       description: Name of stack 
-  #       type: string
-  #   steps:
-  #     - run:
-  #         name: Stack Status 
-  #         command: |
-  #           while [ 1 ]   # Endless loop.
-  #           do
-  #               stack_Status=$(aws --profile <<parameters.user_role>> --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
-  #                   --stack-name <<parameters.stackname>>)
-  #               echo "Stack Status: $stack_Status"
-  #               if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
-  #                   echo "Exiting stack status: $stack_Status"
-  #                   exit 0
-  #               elif [[ $stack_Status == "CREATE_FAILED" || $stack_Status == "ROLLBACK_IN_PROGRESS" || $stack_Status == "ROLLBACK_COMPLETE" || $stack_Status == "UPDATE_ROLLBACK_COMPLETE" || $stack_Status == "DELETE_IN_PROGRESS" ]]; then
-  #                   echo "Exiting stack status: $stack_Status"
-  #                   exit 1
-  #               fi
-  #               sleep 5
-  #           done
-  # change_status:
-  #   description: Wait for changes status CREATE_COMPLETE. 
-  #   parameters:
-  #     # user_role:
-  #     #   description: IAM user role
-  #     #   type: string
-  #     #   default: $AWS_CLI_PROFILE_NAME 
-  #     changename:
-  #       description: Name of stack change set
-  #       type: string
-  #   steps:
-  #     - run:
-  #         name: Change-set Status 
-  #         command: |
-  #           while [ 1 ]   # Endless loop.
-  #           do
-  #               change_Status=$(aws --profile <<parameters.user_role>> --output text --query "Status" cloudformation describe-change-set \
-  #                   --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
-  #               echo "Change Status: $change_Status"
-  #               if [[ $change_Status == "CREATE_COMPLETE" ]]; then
-  #                   echo "Exiting change-set status: $change_Status"
-  #                   exit 0
-  #               fi
-  #               sleep 5
-  #           done
+# create_changes
+# Multi IAM User and roles needed for various steps in creating
+# aws infrasturcture.
+# Here is where users with different credentials access aws.
+# The critical issue is setting up aws cli env variables and config for those iam users when needed.
+# AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_DEFAULT_REGION could be set in a restricted context or project level
+# but it will create an issue of only allowing one user whose credentials are set at that level.
+# Another solution will be to create different profiles/credentials in 
+# AWS_CONFIG_FILE~/.aws/config and AWS_SHARED_CREDENTIALS_FILE=~/.aws/credentials then use them here with a shared workspace. 
   create_changes:
     description: Create stack infrasturcture changes 
     parameters:
@@ -420,8 +356,6 @@ commands:
         type: string
         default: UPDATE 
     steps:
-      # - attach_workspace:
-      #     at: ~/.aws
       - run:
           name: Upload templates to S3 
           command: |
@@ -476,9 +410,6 @@ commands:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-      # - change_status:
-      #     # user_role: <<parameters.user_role>>
-      #     changename: <<parameters.changename>>
       - run:
           name: <<parameters.changename>> Status 
           command: |
@@ -509,7 +440,7 @@ commands:
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run:
-          name: Setup <<parameters.changename>> infrastructure 
+          name: Setup <<parameters.changename>>  
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
@@ -526,11 +457,8 @@ commands:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-      # - stack_status:
-      #     # user_role: <<parameters.user_role>>
-      #     stackname: <<parameters.stackname>>
       - run:
-          name: <<parameters.stackname>> Status 
+          name: Creation Status 
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
@@ -589,23 +517,15 @@ commands:
       version:
         description: Template version
         type: string 
-    steps: 
-      # configure aws cli for admin users 
-      # - configure_aws:
-      #     access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
-      #     secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
-      #     profile_name: $ADMIN_USER_NAME        
+    steps:     
       - create_changes:
-          # user_role: $ADMIN_USER_NAME
           access_key_id: <<parameters.access_key_id>>
           secret_access_key: <<parameters.secret_access_key>>
           region: <<parameters.region>>
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
-    # when:
-    #   condition:
-    #     equal: [ $CIRCLE_USERNAME, $ADMIN_USER_NAME ]
+
 # 
 defaults: &defaults
   docker:
@@ -798,37 +718,43 @@ jobs:
       # for simplicity the progres database is also setup by compliance change-set.
       # Ideally there should be another step after compliance change-set for database admin users
       - security_changes:
-          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
-          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
-          region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
           changename: compliance
           type: CREATE
           version: "1.0"
-      # - database
-
+      # - database_changes:
+          # access_key_id: $AWS_DB_ACCESS_KEY_ID
+          # secret_access_key: $AWS_DB_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          # stackname: $CFN_STACKS
+          # changename: progresdb
+          # type: UPDATE
+          # version: "1.?"
       # configure aws cli for other users e.g devops team and web developers (use default settings)
       # - configure_aws
       - create_changes:
-          access_key_id: $AWS_USER_ACCESS_KEY_ID
-          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
-          region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          # access_key_id: $AWS_USER_ACCESS_KEY_ID
+          # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
           changename: deploy-backend
           # type: UPDATE # default setting
           version: "1.1"
       - create_changes:
-          access_key_id: $AWS_USER_ACCESS_KEY_ID
-          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
-          region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          # access_key_id: $AWS_USER_ACCESS_KEY_ID
+          # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
           changename: deploy-frontend
           version: "1.2"
       - security_changes:
-          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
-          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
-          region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
           changename: s3policy
           type: UPDATE
           version: "1.3"
@@ -846,9 +772,10 @@ jobs:
 # ----------------------------------------------------------
 # create_changes command exits on failure notify concern individuals here.
 # Cloudformation is set to automatically rollback to last successfull update.
-# You can execute a rollback here with the commands below but
+# You can execute a complete rollback of frontend and backend changes here with the commands below but
 # it will be better to deal with cloudformation rollbacks at AWS end 
-# to avoid an endless loop checking on AWS stack events.
+# to avoid an endless loop checking on AWS stack events such as UPDATE_ROLLBACK_COMPLETE
+# if it was a failed UPDATE or CREATE_FAILED if it was a failed CREATE.
       # - create_changes:
       #     stackname: $CFN_STACKS
       #     changename: rollback-deploy
