@@ -325,10 +325,10 @@ commands:
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - persist_to_workspace:
-          root: $HOME
+          root: ~/.aws
           paths:
-            - .aws/credentials
-            - .aws/config
+            - credentials*
+            - config*
   stack_status:
     description: Check status of stack updates
     parameters: 
@@ -413,7 +413,7 @@ commands:
         default: UPDATE      
     steps:
       - attach_workspace:
-          at: $HOME
+          at: ~/.aws
       - run:
           name: Upload templates to S3 
           command: |
