@@ -325,14 +325,18 @@ commands:
             PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-#       - persist_to_workspace:
-#           root: ~/
-#           paths:
-#             - .aws/credentials
-#             - .aws/config
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - .aws/credentials
+            - .aws/config
   stack_status:
     description: Check status of stack updates
     parameters: 
+      user_role:
+        description: IAM user role
+        type: string
+        default: $AWS_CLI_PROFILE_NAME
       stackname:
         description: Name of stack 
         type: string
@@ -342,7 +346,7 @@ commands:
           command: |
             while [ 1 ]   # Endless loop.
             do
-                stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
+                stack_Status=$(aws --profile <<parameters.user_role>> --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
                     --stack-name <<parameters.stackname>>)
                 echo "Stack Status: $stack_Status"
                 if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
@@ -356,7 +360,11 @@ commands:
             done
   change_status:
     description: Wait for changes status CREATE_COMPLETE. 
-    parameters: 
+    parameters:
+      user_role:
+        description: IAM user role
+        type: string
+        default: $AWS_CLI_PROFILE_NAME 
       changename:
         description: Name of stack change set
         type: string
@@ -366,7 +374,7 @@ commands:
           command: |
             while [ 1 ]   # Endless loop.
             do
-                change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
+                change_Status=$(aws --profile <<parameters.user_role>> --output text --query "Status" cloudformation describe-change-set \
                     --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
                 echo "Change Status: $change_Status"
                 if [[ $change_Status == "CREATE_COMPLETE" ]]; then
@@ -405,8 +413,8 @@ commands:
         type: string
         default: UPDATE      
     steps:
-      # - attach_workspace:
-      #     at: ~/
+      - attach_workspace:
+          at: ~/
       - run:
           name: Upload templates to S3 
           command: |
@@ -433,12 +441,14 @@ commands:
               --change-set-type <<parameters.type>> )
             # echo $change_set_ID
       - change_status:
+          user_role: <<parameters.user_role>>
           changename: <<parameters.changename>>
       - run:
           name: Setup <<parameters.changename>> infrastructure 
           command: |
             aws --profile <<parameters.user_role>> cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
       - stack_status:
+          user_role: <<parameters.user_role>>
           stackname: <<parameters.stackname>>
   security_changes:
     description: Create IAM roles and Security groups 
