@@ -284,11 +284,11 @@ commands:
       access_key_id: 
         type: string
         description: AWS access key Id
-        default: $AWS_ACCESS_KEY_ID
+        default: $AWS_USER_ACCESS_KEY_ID
       secret_access_key: 
         type: string
         description: AWS secret access key
-        default: $AWS_SECRET_ACCESS_KEY
+        default: $AWS_USER_SECRET_ACCESS_KEY
       profile_name: 
         type: string
         description: AWS CLI profile name
@@ -299,6 +299,7 @@ commands:
         default: $AWS_DEFAULT_REGION
     steps:
       - run:
+          name: Configure AWS Access Key ID
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
@@ -324,7 +325,11 @@ commands:
             PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-          name: Configure AWS Access Key ID
+#       - persist_to_workspace:
+#           root: ~/
+#           paths:
+#             - .aws/credentials
+#             - .aws/config
   stack_status:
     description: Check status of stack updates
     parameters: 
@@ -373,6 +378,10 @@ commands:
   create_changes:
     description: Create stack infrasturcture changes 
     parameters:
+      user_role:
+        description: IAM user role
+        type: string
+        default: $AWS_CLI_PROFILE_NAME
       stackname:
         description: Name of stack 
         type: string
@@ -396,11 +405,13 @@ commands:
         type: string
         default: UPDATE      
     steps:
+      # - attach_workspace:
+      #     at: ~/
       - run:
           name: Upload templates to S3 
           command: |
             cd .circleci/files/
-            aws cloudformation package --template-file \
+            aws --profile <<parameters.user_role>> cloudformation package --template-file \
               stacks_v<<parameters.version>>.yaml \
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
@@ -414,7 +425,7 @@ commands:
       - run:
           name: Apply <<parameters.changename>> changes
           command: |
-            change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
+            change_set_ID=$(aws --profile <<parameters.user_role>> --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
               --capabilities <<parameters.capabilities>> \
@@ -426,7 +437,7 @@ commands:
       - run:
           name: Setup <<parameters.changename>> infrastructure 
           command: |
-            aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
+            aws --profile <<parameters.user_role>> cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
       - stack_status:
           stackname: <<parameters.stackname>>
   security_changes:
@@ -453,6 +464,7 @@ commands:
           secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           profile_name: $ADMIN_USER_NAME        
       - create_changes:
+          user_role: $ADMIN_USER_NAME
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
