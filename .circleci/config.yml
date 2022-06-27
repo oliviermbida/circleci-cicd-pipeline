@@ -788,7 +788,7 @@ jobs:
       # - database
 
       # configure aws cli for other users e.g devops team and web developers (use default settings)
-      - configure_aws
+      # - configure_aws
       - create_changes:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
           secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
