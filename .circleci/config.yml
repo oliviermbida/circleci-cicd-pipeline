@@ -47,7 +47,9 @@ commands:
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
 
             # delete infrastructure
-            aws cloudformation delete-stack --stack-name <<parameters.stackname>>-<<parameters.workflow_id>>
+            if [[ <<parameters.workflow_id>> == $CIRCLE_WORKFLOW_ID ]]; then
+            aws cloudformation delete-stack --stack-name <<parameters.stackname>>
+            fi
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -721,7 +723,7 @@ jobs:
           # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
+          stackname: $CFN_STACKS
           changename: compliance
           type: CREATE
           version: "1.0"
@@ -739,7 +741,7 @@ jobs:
           # access_key_id: $AWS_USER_ACCESS_KEY_ID
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
+          stackname: $CFN_STACKS
           changename: deploy-backend
           # type: UPDATE # default setting
           version: "1.1"
@@ -747,14 +749,14 @@ jobs:
           # access_key_id: $AWS_USER_ACCESS_KEY_ID
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
+          stackname: $CFN_STACKS
           changename: deploy-frontend
           version: "1.2"
       - security_changes:
           # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS-$CIRCLE_WORKFLOW_ID
+          stackname: $CFN_STACKS
           changename: s3policy
           type: UPDATE
           version: "1.3"
