@@ -511,6 +511,18 @@ commands:
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
+      access_key_id: 
+        type: string
+        description: AWS access key Id
+        default: $AWS_ADMIN_ACCESS_KEY_ID
+      secret_access_key: 
+        type: string
+        description: AWS secret access key
+        default: $AWS_ADMIN_SECRET_ACCESS_KEY
+      region: 
+        type: string
+        description: AWS default region
+        default: $AWS_DEFAULT_REGION
       stackname:
         description: Name of stack 
         type: string
@@ -533,8 +545,9 @@ commands:
       #     profile_name: $ADMIN_USER_NAME        
       - create_changes:
           # user_role: $ADMIN_USER_NAME
-          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
-          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          access_key_id: <<parameters.access_key_id>>
+          secret_access_key: <<parameters.secret_access_key>>
+          region: <<parameters.region>>
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
@@ -733,6 +746,10 @@ jobs:
       # for simplicity the progres database is also setup by compliance change-set.
       # Ideally there should be another step after compliance change-set for database admin users
       - security_changes:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          region: $AWS_DEFAULT_REGION
+          changename: <<parameters.changename>>
           stackname: $CFN_STACKS
           changename: compliance
           type: CREATE
@@ -742,15 +759,24 @@ jobs:
       # configure aws cli for other users e.g devops team and web developers (use default settings)
       - configure_aws
       - create_changes:
+          access_key_id: $AWS_USER_ACCESS_KEY_ID
+          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          region: $AWS_DEFAULT_REGION
           stackname: $CFN_STACKS
           changename: deploy-backend
           # type: UPDATE # default setting
           version: "1.1"
       - create_changes:
+          access_key_id: $AWS_USER_ACCESS_KEY_ID
+          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          region: $AWS_DEFAULT_REGION
           stackname: $CFN_STACKS
           changename: deploy-frontend
           version: "1.2"
       - security_changes:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+          region: $AWS_DEFAULT_REGION
           stackname: $CFN_STACKS
           changename: s3policy
           type: UPDATE
