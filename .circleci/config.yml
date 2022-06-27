@@ -427,10 +427,13 @@ commands:
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            export $AWS_ACCESS_KEY_ID
 
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            export $AWS_SECRET_ACCESS_KEY
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+            export $AWS_DEFAULT_REGION
 
             cd .circleci/files/
             aws cloudformation package --template-file \
@@ -453,10 +456,13 @@ commands:
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            export $AWS_ACCESS_KEY_ID
 
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            export $AWS_SECRET_ACCESS_KEY
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+            export $AWS_DEFAULT_REGION
 
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
@@ -477,10 +483,13 @@ commands:
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            export $AWS_ACCESS_KEY_ID
 
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            export $AWS_SECRET_ACCESS_KEY
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+            export $AWS_DEFAULT_REGION
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
@@ -501,10 +510,14 @@ commands:
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            export $AWS_ACCESS_KEY_ID
 
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            export $AWS_SECRET_ACCESS_KEY
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+            export $AWS_DEFAULT_REGION
+
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
@@ -518,10 +531,14 @@ commands:
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            export $AWS_ACCESS_KEY_ID
 
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            export $AWS_SECRET_ACCESS_KEY
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+            export $AWS_DEFAULT_REGION
+            
             while [ 1 ]   # Endless loop.
             do
                 stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
