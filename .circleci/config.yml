@@ -429,7 +429,7 @@ commands:
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-
+            aws configure set region $AWS_DEFAULT_REGION
             cd .circleci/files/
             aws cloudformation package --template-file \
               stacks_v<<parameters.version>>.yaml \
@@ -453,7 +453,7 @@ commands:
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-
+            aws configure set region $AWS_DEFAULT_REGION
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
@@ -475,7 +475,7 @@ commands:
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-
+            aws configure set region $AWS_DEFAULT_REGION
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
@@ -498,7 +498,7 @@ commands:
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-
+            aws configure set region $AWS_DEFAULT_REGION
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
           environment:
             AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
@@ -514,7 +514,7 @@ commands:
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-
+            aws configure set region $AWS_DEFAULT_REGION
             while [ 1 ]   # Endless loop.
             do
                 stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
