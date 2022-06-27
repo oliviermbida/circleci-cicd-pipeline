@@ -397,10 +397,6 @@ commands:
         type: string
         description: AWS default region
         default: $AWS_DEFAULT_REGION
-      # user_role:
-      #   description: IAM user role
-      #   type: string
-      #   default: $AWS_CLI_PROFILE_NAME
       stackname:
         description: Name of stack 
         type: string
