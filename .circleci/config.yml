@@ -749,7 +749,6 @@ jobs:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           region: $AWS_DEFAULT_REGION
-          changename: <<parameters.changename>>
           stackname: $CFN_STACKS
           changename: compliance
           type: CREATE
