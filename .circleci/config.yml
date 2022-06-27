@@ -425,18 +425,10 @@ commands:
       - run:
           name: Upload templates to S3 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" 
-
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" 
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
 
             cd .circleci/files/
             aws cloudformation package --template-file \
@@ -444,9 +436,9 @@ commands:
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run: 
           name: Wait for local packaged file
           command: |
@@ -457,18 +449,10 @@ commands:
       - run:
           name: Apply <<parameters.changename>> changes
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
             
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" 
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" 
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
 
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
@@ -478,27 +462,19 @@ commands:
               --change-set-type <<parameters.type>> )
             # echo $change_set_ID
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       # - change_status:
       #     # user_role: <<parameters.user_role>>
       #     changename: <<parameters.changename>>
       - run:
           name: <<parameters.changename>> Status 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
             
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" 
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" 
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
 
             while [ 1 ]   # Endless loop.
             do
@@ -512,48 +488,32 @@ commands:
                 sleep 5
             done
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run:
           name: Setup <<parameters.changename>> infrastructure 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
             
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" 
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" 
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
 
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       # - stack_status:
       #     # user_role: <<parameters.user_role>>
       #     stackname: <<parameters.stackname>>
       - run:
           name: <<parameters.stackname>> Status 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
             
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" 
+            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" 
+            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
 
             while [ 1 ]   # Endless loop.
             do
@@ -570,9 +530,9 @@ commands:
                 sleep 5
             done
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
