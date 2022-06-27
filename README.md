@@ -69,3 +69,26 @@ Circleci Pipeline to deploy a web application
 - To obtain a Bot Auth follow steps in [Connecting Circleci to Slack](https://github.com/CircleCI-Public/slack-orb/wiki/Setup) and Copy to 
 - Circleci : Project settings > Environment Variables > SLACK_ACCESS_TOKEN
 - Circleci : Project settings > Environment Variables > SLACK_DEFAULT_CHANNEL
+
+# Infrastructure Phase
+
+- Create/Deploy Infrastructure to AWS
+
+The main challenge is to sync aws stack events with circleci pipeline steps. 
+Since I've also added a multi IAM user step execution in the circleci pipeline,
+you also have to deal with IAM user priviledges.
+
+Here is a screenshot of when there is a conflict of change-set status if the timing is wrong of executing an update while another is in cleanup/deleted after a successful previous update.
+
+![Timing conflict](/docs/screenshots/SCREENSHOT05.png)
+
+To get it right you need an event loop to wait for a signal before moving to the next step.
+
+![Wait loop](/docs/screenshots/SCREENSHOT05_loop.png)
+
+And here is another when an IAM user with the wrong priviledges executes an authorized step.
+
+![Unauthorized execution](/docs/screenshots/SCREENSHOT05_unauth.png)
+
+To solve this you need to know when to configure aws cli for each IAM user before executing the step.
+
