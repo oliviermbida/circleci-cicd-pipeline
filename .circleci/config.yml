@@ -425,11 +425,14 @@ commands:
       - run:
           name: Upload templates to S3 
           command: |
-            
+            AWS_ACCESS_KEY_ID=$(eval echo "$AWS_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$AWS_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$AWS_DEFAULT_REGION")
+
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID 
 
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY 
-            aws configure set region us-east-1
+            aws configure set region $AWS_DEFAULT_REGION
             cd .circleci/files/
             aws cloudformation package --template-file \
               stacks_v<<parameters.version>>.yaml \
@@ -437,7 +440,7 @@ commands:
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
           environment:
             AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            # AWS_DEFAULT_REGION: <<parameters.region>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
             AWS_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run: 
           name: Wait for local packaged file
