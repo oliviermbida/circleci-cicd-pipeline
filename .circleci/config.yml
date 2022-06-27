@@ -278,64 +278,64 @@ commands:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
-  configure_aws:
-    description: Setup AWS CLI v2.
-    parameters:
-      access_key_id: 
-        type: string
-        description: AWS access key Id
-        default: $AWS_USER_ACCESS_KEY_ID
-      secret_access_key: 
-        type: string
-        description: AWS secret access key
-        default: $AWS_USER_SECRET_ACCESS_KEY
-      profile_name: 
-        type: string
-        description: AWS CLI profile name
-        default: $AWS_CLI_PROFILE_NAME
-      region: 
-        type: string
-        description: AWS default region
-        default: $AWS_DEFAULT_REGION
-    steps:
-      - run:
-          name: Configure AWS Access Key ID
-          command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+  # configure_aws:
+  #   description: Setup AWS CLI v2.
+  #   parameters:
+  #     access_key_id: 
+  #       type: string
+  #       description: AWS access key Id
+  #       default: $AWS_USER_ACCESS_KEY_ID
+  #     secret_access_key: 
+  #       type: string
+  #       description: AWS secret access key
+  #       default: $AWS_USER_SECRET_ACCESS_KEY
+  #     profile_name: 
+  #       type: string
+  #       description: AWS CLI profile name
+  #       default: $AWS_CLI_PROFILE_NAME
+  #     region: 
+  #       type: string
+  #       description: AWS default region
+  #       default: $AWS_DEFAULT_REGION
+  #   steps:
+  #     - run:
+  #         name: Configure AWS Access Key ID
+  #         command: |
+  #           # AWS CLI supported environment variables
+  #           AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
 
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+  #           AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
 
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+  #           AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            aws configure set aws_access_key_id \
-                "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
-                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+  #           aws configure set aws_access_key_id \
+  #               "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
+  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
 
-            aws configure set aws_secret_access_key \
-                "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
-                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+  #           aws configure set aws_secret_access_key \
+  #               "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
+  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
 
-            aws configure set default.region "$PARAM_AWS_CLI_REGION" \
-                --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+  #           aws configure set default.region "$PARAM_AWS_CLI_REGION" \
+  #               --profile "$PARAM_AWS_CLI_PROFILE_NAME"
                 
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-      - persist_to_workspace:
-          root: ~/.aws
-          paths:
-            - credentials*
-            - config*
+  #         environment:
+  #           PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
+  #           PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile_name>>
+  #           PARAM_AWS_CLI_REGION: <<parameters.region>>
+  #           PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+  #     - persist_to_workspace:
+  #         root: ~/.aws
+  #         paths:
+  #           - credentials*
+  #           - config*
   stack_status:
     description: Check status of stack updates
     parameters: 
-      user_role:
-        description: IAM user role
-        type: string
-        default: $AWS_CLI_PROFILE_NAME
+      # user_role:
+      #   description: IAM user role
+      #   type: string
+      #   default: $AWS_CLI_PROFILE_NAME
       stackname:
         description: Name of stack 
         type: string
@@ -360,10 +360,10 @@ commands:
   change_status:
     description: Wait for changes status CREATE_COMPLETE. 
     parameters:
-      user_role:
-        description: IAM user role
-        type: string
-        default: $AWS_CLI_PROFILE_NAME 
+      # user_role:
+      #   description: IAM user role
+      #   type: string
+      #   default: $AWS_CLI_PROFILE_NAME 
       changename:
         description: Name of stack change set
         type: string
@@ -385,10 +385,22 @@ commands:
   create_changes:
     description: Create stack infrasturcture changes 
     parameters:
-      user_role:
-        description: IAM user role
+      access_key_id: 
         type: string
-        default: $AWS_CLI_PROFILE_NAME
+        description: AWS access key Id
+        default: $AWS_USER_ACCESS_KEY_ID
+      secret_access_key: 
+        type: string
+        description: AWS secret access key
+        default: $AWS_USER_SECRET_ACCESS_KEY
+      region: 
+        type: string
+        description: AWS default region
+        default: $AWS_DEFAULT_REGION
+      # user_role:
+      #   description: IAM user role
+      #   type: string
+      #   default: $AWS_CLI_PROFILE_NAME
       stackname:
         description: Name of stack 
         type: string
@@ -410,15 +422,19 @@ commands:
       type:
         description: Type of change 
         type: string
-        default: UPDATE      
+        default: UPDATE 
+    environment:
+      AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+      AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+      AWS_DEFAULT_REGION: <<parameters.region>> 
     steps:
-      - attach_workspace:
-          at: ~/.aws
+      # - attach_workspace:
+      #     at: ~/.aws
       - run:
           name: Upload templates to S3 
           command: |
             cd .circleci/files/
-            aws --profile <<parameters.user_role>> cloudformation package --template-file \
+            aws cloudformation package --template-file \
               stacks_v<<parameters.version>>.yaml \
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
@@ -432,7 +448,7 @@ commands:
       - run:
           name: Apply <<parameters.changename>> changes
           command: |
-            change_set_ID=$(aws --profile <<parameters.user_role>> --output text --query "Id" cloudformation create-change-set \
+            change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
               --capabilities <<parameters.capabilities>> \
@@ -440,14 +456,14 @@ commands:
               --change-set-type <<parameters.type>> )
             # echo $change_set_ID
       - change_status:
-          user_role: <<parameters.user_role>>
+          # user_role: <<parameters.user_role>>
           changename: <<parameters.changename>>
       - run:
           name: Setup <<parameters.changename>> infrastructure 
           command: |
-            aws --profile <<parameters.user_role>> cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
+            aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
       - stack_status:
-          user_role: <<parameters.user_role>>
+          # user_role: <<parameters.user_role>>
           stackname: <<parameters.stackname>>
   security_changes:
     description: Create IAM roles and Security groups 
@@ -468,12 +484,14 @@ commands:
         type: string 
     steps: 
       # configure aws cli for admin users 
-      - configure_aws:
+      # - configure_aws:
+      #     access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+      #     secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
+      #     profile_name: $ADMIN_USER_NAME        
+      - create_changes:
+          # user_role: $ADMIN_USER_NAME
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
-          profile_name: $ADMIN_USER_NAME        
-      - create_changes:
-          user_role: $ADMIN_USER_NAME
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
