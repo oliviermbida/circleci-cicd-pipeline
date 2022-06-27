@@ -9,6 +9,12 @@ orbs:
 #     default: false
 
 commands:
+# destroy-environment:
+# Cloudformation is set to rollback to the last successfull update.
+# Therefore this is a nuclear option to destroy the entire stack.
+# And there will have to be an event loop to check for a signal
+# when it is ok to use this option otherwise it will not be possible
+# to do so untill a clean up of the failed update is completed.
   destroy-environment:
     description: >
       Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -779,9 +785,9 @@ jobs:
               echo $backend_ip | tee -a  .circleci/ansible/inventory.txt > /dev/null
             fi
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: AWS_USER_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: AWS_USER_SECRET_ACCESS_KEY
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY
       - persist_to_workspace:
           root: ~/
           paths:
