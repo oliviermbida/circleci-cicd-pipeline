@@ -1,6 +1,8 @@
 # circleci-cicd-pipeline
 Circleci Pipeline to deploy a web application
 
+![Solution Architecture](/docs/screenshots/circleci_cicd_pipeline.png)
+
 # Build
 
 ![Build screenshot1-2](/docs/screenshots/SCREENSHOT01-2.png)
@@ -86,7 +88,7 @@ To get it right you need an event loop to wait for a signal before moving to the
 
 ![Wait loop](/docs/screenshots/SCREENSHOT05_loop.png)
 
-And here is another when an IAM user with the wrong priviledges executes an authorized step.
+And here is another when an IAM user with the wrong priviledges executes an unauthorized step.
 
 ![Unauthorized execution](/docs/screenshots/SCREENSHOT05_unauth.png)
 
