@@ -329,59 +329,59 @@ commands:
   #         paths:
   #           - credentials*
   #           - config*
-  stack_status:
-    description: Check status of stack updates
-    parameters: 
-      # user_role:
-      #   description: IAM user role
-      #   type: string
-      #   default: $AWS_CLI_PROFILE_NAME
-      stackname:
-        description: Name of stack 
-        type: string
-    steps:
-      - run:
-          name: Stack Status 
-          command: |
-            while [ 1 ]   # Endless loop.
-            do
-                stack_Status=$(aws --profile <<parameters.user_role>> --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
-                    --stack-name <<parameters.stackname>>)
-                echo "Stack Status: $stack_Status"
-                if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
-                    echo "Exiting stack status: $stack_Status"
-                    exit 0
-                elif [[ $stack_Status == "CREATE_FAILED" || $stack_Status == "ROLLBACK_IN_PROGRESS" || $stack_Status == "ROLLBACK_COMPLETE" || $stack_Status == "UPDATE_ROLLBACK_COMPLETE" || $stack_Status == "DELETE_IN_PROGRESS" ]]; then
-                    echo "Exiting stack status: $stack_Status"
-                    exit 1
-                fi
-                sleep 5
-            done
-  change_status:
-    description: Wait for changes status CREATE_COMPLETE. 
-    parameters:
-      # user_role:
-      #   description: IAM user role
-      #   type: string
-      #   default: $AWS_CLI_PROFILE_NAME 
-      changename:
-        description: Name of stack change set
-        type: string
-    steps:
-      - run:
-          name: Change-set Status 
-          command: |
-            while [ 1 ]   # Endless loop.
-            do
-                change_Status=$(aws --profile <<parameters.user_role>> --output text --query "Status" cloudformation describe-change-set \
-                    --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
-                echo "Change Status: $change_Status"
-                if [[ $change_Status == "CREATE_COMPLETE" ]]; then
-                    echo "Exiting change-set status: $change_Status"
-                    exit 0
-                fi
-                sleep 5
-            done
+  # stack_status:
+  #   description: Check status of stack updates
+  #   parameters: 
+  #     # user_role:
+  #     #   description: IAM user role
+  #     #   type: string
+  #     #   default: $AWS_CLI_PROFILE_NAME
+  #     stackname:
+  #       description: Name of stack 
+  #       type: string
+  #   steps:
+  #     - run:
+  #         name: Stack Status 
+  #         command: |
+  #           while [ 1 ]   # Endless loop.
+  #           do
+  #               stack_Status=$(aws --profile <<parameters.user_role>> --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
+  #                   --stack-name <<parameters.stackname>>)
+  #               echo "Stack Status: $stack_Status"
+  #               if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
+  #                   echo "Exiting stack status: $stack_Status"
+  #                   exit 0
+  #               elif [[ $stack_Status == "CREATE_FAILED" || $stack_Status == "ROLLBACK_IN_PROGRESS" || $stack_Status == "ROLLBACK_COMPLETE" || $stack_Status == "UPDATE_ROLLBACK_COMPLETE" || $stack_Status == "DELETE_IN_PROGRESS" ]]; then
+  #                   echo "Exiting stack status: $stack_Status"
+  #                   exit 1
+  #               fi
+  #               sleep 5
+  #           done
+  # change_status:
+  #   description: Wait for changes status CREATE_COMPLETE. 
+  #   parameters:
+  #     # user_role:
+  #     #   description: IAM user role
+  #     #   type: string
+  #     #   default: $AWS_CLI_PROFILE_NAME 
+  #     changename:
+  #       description: Name of stack change set
+  #       type: string
+  #   steps:
+  #     - run:
+  #         name: Change-set Status 
+  #         command: |
+  #           while [ 1 ]   # Endless loop.
+  #           do
+  #               change_Status=$(aws --profile <<parameters.user_role>> --output text --query "Status" cloudformation describe-change-set \
+  #                   --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
+  #               echo "Change Status: $change_Status"
+  #               if [[ $change_Status == "CREATE_COMPLETE" ]]; then
+  #                   echo "Exiting change-set status: $change_Status"
+  #                   exit 0
+  #               fi
+  #               sleep 5
+  #           done
   create_changes:
     description: Create stack infrasturcture changes 
     parameters:
@@ -423,10 +423,6 @@ commands:
         description: Type of change 
         type: string
         default: UPDATE 
-    environment:
-      AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
-      AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
-      AWS_DEFAULT_REGION: <<parameters.region>> 
     steps:
       # - attach_workspace:
       #     at: ~/.aws
@@ -438,6 +434,10 @@ commands:
               stacks_v<<parameters.version>>.yaml \
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
+          environment:
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+            AWS_DEFAULT_REGION: <<parameters.region>> 
       - run: 
           name: Wait for local packaged file
           command: |
@@ -455,16 +455,63 @@ commands:
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
             # echo $change_set_ID
-      - change_status:
-          # user_role: <<parameters.user_role>>
-          changename: <<parameters.changename>>
+          environment:
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+      # - change_status:
+      #     # user_role: <<parameters.user_role>>
+      #     changename: <<parameters.changename>>
+      - run:
+          name: <<parameters.changename>> Status 
+          command: |
+            while [ 1 ]   # Endless loop.
+            do
+                change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
+                    --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
+                echo "Change Status: $change_Status"
+                if [[ $change_Status == "CREATE_COMPLETE" ]]; then
+                    echo "Exiting change-set status: $change_Status"
+                    exit 0
+                fi
+                sleep 5
+            done
+          environment:
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
       - run:
           name: Setup <<parameters.changename>> infrastructure 
           command: |
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
-      - stack_status:
-          # user_role: <<parameters.user_role>>
-          stackname: <<parameters.stackname>>
+          environment:
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
+      # - stack_status:
+      #     # user_role: <<parameters.user_role>>
+      #     stackname: <<parameters.stackname>>
+      - run:
+          name: <<parameters.stackname>> Status 
+          command: |
+            while [ 1 ]   # Endless loop.
+            do
+                stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
+                    --stack-name <<parameters.stackname>>)
+                echo "Stack Status: $stack_Status"
+                if [[ $stack_Status == "CREATE_COMPLETE" || $stack_Status == "UPDATE_COMPLETE"  ]]; then
+                    echo "Exiting stack status: $stack_Status"
+                    exit 0
+                elif [[ $stack_Status == "CREATE_FAILED" || $stack_Status == "ROLLBACK_IN_PROGRESS" || $stack_Status == "ROLLBACK_COMPLETE" || $stack_Status == "UPDATE_ROLLBACK_COMPLETE" || $stack_Status == "DELETE_IN_PROGRESS" ]]; then
+                    echo "Exiting stack status: $stack_Status"
+                    exit 1
+                fi
+                sleep 5
+            done
+          environment:
+            AWS_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            AWS_SECRET_ACCESS_KEY: <<paramerters.secret_access_key>>
+            AWS_DEFAULT_REGION: <<parameters.region>>
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
