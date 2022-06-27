@@ -527,12 +527,10 @@ commands:
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
-
 # 
 defaults: &defaults
   docker:
-    - image: circleci/node:13.8.0
-            
+    - image: circleci/node:13.8.0           
 jobs:
   build-frontend:
     <<: *defaults
@@ -560,7 +558,6 @@ jobs:
       #       - revert-commit:
       #           commit_sha: $CIRCLE_SHA1  
       # - jira/notify
-
   build-backend:
     <<: *defaults
     steps:
@@ -587,7 +584,6 @@ jobs:
       #       - revert-commit:
       #           commit_sha: $CIRCLE_SHA1  
       # - jira/notify
-
   test-frontend:
     <<: *defaults
     steps:
