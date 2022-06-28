@@ -3,6 +3,28 @@ Circleci Pipeline to deploy a web application
 
 ![Solution Architecture](/docs/screenshots/circleci_cicd_pipeline.png)
 
+# Solution overview
+
+. Circleci CI/CD Pipeline
+. Source control GIT Workflow
+. AWS CloudFormation for Infrastructure As Code
+. Ansible for Configuration As Code
+. Docker builds
+. Docker Cloud Test servers e.g SonarCloud
+. JIRA issue integration
+. Slack issue notification
+
+- Security
+. Multi IAM users Circleci pipeline job step execution i.e IAM users such as Admin(security), Database Admin , DevOps team and web developers each have different priviledges in setting up infrastructure and configuration. An example of how different teams have to collaborate.
+. Use of restricted context to store github or bitbucket secrets in Circleci.
+. Use of AWS secret manager and KMS to store sensitive details such as database username and password. 
+These details can only be shared with the credentials of an authorize IAM user such as Admin(security) or Database Admin.
+Secrets can be rotated without the need of manually deleting and adding new environment variables in Circleci context.
+
+- Features
+. Status sync with Circleci pipeline when deploying infrastructure to AWS
+. Git Push command available in Circleci job step to commit for example audit fixes back to master
+
 # Build
 
 ![Build screenshot1-2](/docs/screenshots/SCREENSHOT01-2.png)
@@ -93,4 +115,6 @@ And here is another when an IAM user with the wrong priviledges executes an unau
 ![Unauthorized execution](/docs/screenshots/SCREENSHOT05_unauth.png)
 
 To solve this you need to know when to configure aws cli for each IAM user before executing the step.
+
+You can see in this link a [screenshoot](/docs/screenshots/SCREENSHOT05_steps.png) of all the steps to ensure the frontend and backend aws infrastructure exist. Most of the time is spent on the Creation status loop waiting for a signal.
 
