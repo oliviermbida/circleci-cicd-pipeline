@@ -775,13 +775,13 @@ jobs:
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
 
             # Get all public IPs for running ec2 instances with a tag-key Name
-            # If looking for a specific instance, | jq to search specific Name
-            # For simplicity this will return only one ip for the ec2 instance created in deploy-backend.
+            # If looking for a specific instance, use instances[?Name == 'backend-${WorkflowID}'] to search specific Name
+            # For simplicity the command below will return only one ip for the ec2 instance created in deploy-backend.
 
             backend_ip=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name=tag-key,Values=Name)
 
-            if [[ $backend_ip != "" ]]; then
+            if [[ $backend_ip != "" && -f ".circleci/ansible/inventory.txt" ]]; then
               echo $backend_ip | tee -a  .circleci/ansible/inventory.txt > /dev/null
             fi
           environment:
@@ -804,7 +804,7 @@ jobs:
       # - create_changes:
       #     stackname: $CFN_STACKS
       #     changename: rollback-deploy
-      #     version: "1.0"  # rollback changes to security_changes and admin user can delete
+      #     version: "1.0"  # rollback changes to security_changes and admin user can delete 
       - slack/notify:
           event: fail
           template: basic_fail_1
