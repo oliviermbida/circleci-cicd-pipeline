@@ -72,7 +72,7 @@ Circleci Pipeline to deploy a web application
 - Circleci : Project settings > Environment Variables > SLACK_ACCESS_TOKEN
 - Circleci : Project settings > Environment Variables > SLACK_DEFAULT_CHANNEL
 
-# Infrastructure Phase
+# Deploy - Infrastructure Phase
 
 - Create/Deploy Infrastructure to AWS
 
