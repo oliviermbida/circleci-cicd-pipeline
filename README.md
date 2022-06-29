@@ -134,8 +134,8 @@ You can see in this link a [screenshoot](/docs/screenshots/SCREENSHOT05_steps.pn
 
 When adding your ansible roles and tasks you can also check your commands before adding to the workflow. Just add a host you want to test those commands in your inventory file e.g
 
-    `[webserver]
-    web ansible_host=$EC2_HOST_IP ansible_connection=ssh  ansible_user=$EC2_USER ansible_ssh_private_key_file=ec2_key_pair.pem`
+    [webserver]
+    web ansible_host=$EC2_HOST_IP ansible_connection=ssh  ansible_user=$EC2_USER ansible_ssh_private_key_file=ec2_key_pair.pem
 
 On linux make sure you set permissions for your ec2_key_pair.pem otherwise this will be rejected by aws.
 
@@ -143,6 +143,7 @@ Now run your play with the debug option to catch any errors. For example testing
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i inventory.ini configure-server.yml
 
-    ![Screenshot ansible test](/docs/screenshots/SCREENSHOT06_ansible.png){:height="540" width="960"}
+
+![Screenshot ansible test](/docs/screenshots/SCREENSHOT06_ansible.png){width=50% height=50%}
 
 
