@@ -3,11 +3,13 @@ orbs:
   jira: circleci/jira@1.3.1
   slack: circleci/slack@4.10.1
 
-# parameters:
+ parameters:
 #   run_integration_tests:
 #     type: boolean
 #     default: false
-
+  workflowID:
+    type: string
+    default: cli803394216630
 commands:
 # destroy-environment:
 # Cloudformation is set to rollback to the last successfull update.
@@ -22,7 +24,7 @@ commands:
     parameters:
       workflow_id:
         type: string
-        default: $CIRCLE_WORKFLOW_ID
+        default: <<pipeline.parameters.workflowID>>
       access_key_id: 
         type: string
         description: AWS access key Id
