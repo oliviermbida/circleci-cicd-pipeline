@@ -960,6 +960,7 @@ jobs:
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             #
+            cd ./backend 
             npm i
             npm run migrations
 
