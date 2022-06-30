@@ -9,12 +9,12 @@ Parameters:
 
 Resources: 
 # SSM Parameters
-  SSMParameterEC2Host:
-    Type: 'AWS::SSM::Parameter'
-    Properties:
-      Name: udapeoleDB-Port
-      Type: String 
-      Value: '5432'
+  # SSMParameterEC2Host:
+  #   Type: 'AWS::SSM::Parameter'
+  #   Properties:
+  #     Name: udapeoleDB-Port
+  #     Type: String 
+  #     Value: '5432'
 # S3 Bucket Policy
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
