@@ -956,7 +956,7 @@ jobs:
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
-            TYPEORM_HOST=$(aws ssm get-parameter \
+            TYPEORM_HOST=$(aws rds describe-db-instances \
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             #
