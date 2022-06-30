@@ -148,7 +148,9 @@ Now run your play with the debug option to catch any errors. For example testing
 
 You can ssh to the host and check the configuration. In this case configure-server was suppose to install pm2 and it did.
 
-    ssh -i ec2_key_pair.pem $EC2_USER@$EC2_HOST_IP
+    ssh -i ec2_key_pair.pem EC2_USER@EC2_HOST_IP
 
 ![Screenshot pm2](/docs/screenshots/SCREENSHOT06_pm2.png)
+
+Once tested they be added to the configuration stage in the pipeline as seen in this [screenshot](/docs/screenshots/SCREENSHOT06_config.png)
 
