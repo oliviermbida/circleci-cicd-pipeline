@@ -953,11 +953,11 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
 
             TYPEORM_PORT=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
             TYPEORM_HOST=$(aws ssm get-parameter \
-                --db-instance-identifier backendDB-<<pipeline.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             #
             npm i
