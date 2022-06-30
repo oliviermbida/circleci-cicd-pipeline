@@ -385,6 +385,9 @@ commands:
               stacks_v<<parameters.version>>.yaml \
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
+            # cleanup
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -415,7 +418,10 @@ commands:
               --capabilities <<parameters.capabilities>> \
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
-            # echo $change_set_ID
+
+            # cleanup
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -437,7 +443,7 @@ commands:
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
-                    --change-set-name <<parameters.changename>> --stack-name $CFN_STACKS)
+                    --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>)
                 echo "Change Status: $change_Status"
                 if [[ $change_Status == "CREATE_COMPLETE" ]]; then
                     echo "Exiting change-set status: $change_Status"
@@ -445,6 +451,9 @@ commands:
                 fi
                 sleep 5
             done
+            # cleanup
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -463,6 +472,9 @@ commands:
 
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
+            # cleanup
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -494,6 +506,9 @@ commands:
                 fi
                 sleep 5
             done
+            # cleanup
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
