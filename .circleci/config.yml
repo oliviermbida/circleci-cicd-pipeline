@@ -869,10 +869,6 @@ jobs:
             # Access secrets which can be rotated by the authorized IAM user
             # without the need of manually deleting and adding new env variables in Circleci
             
-            EC2_KEY=$(aws ssm get-parameter \
-                --name /aws/reference/secretsmanager/UdaPeopleSSH \
-                --with-decryption --output text --query "Parameter.Value" | jq -r ."value")
-
             EC2_USER=$(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleSSH \
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
@@ -898,11 +894,13 @@ jobs:
             if [ -f "$HOME/.ssh/id_ed25519" ]; then
               rm -f "$HOME/.ssh/id_ed25519"
             fi
-            printf "%s" "$EC2_KEY" > "$HOME/.ssh/id_ed25519"
+
+            aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/udapeople_ssh_key \
+                --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
             chmod 0700 "$HOME/.ssh/id_ed25519" 
 
             # cleanup
-            unset EC2_KEY 
             unset EC2_USER
             unset EC2_HOST
             unset AWS_ACCESS_KEY_ID
