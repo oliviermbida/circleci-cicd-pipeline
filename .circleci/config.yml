@@ -779,36 +779,35 @@ jobs:
           changename: s3policy
           type: UPDATE
           version: "1.3"
-# This step will not be neccessary with the aws_ec2 ansible plugin
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+# This step has been moved to the next job. 
+      # - run:
+      #     name: Add back-end ip to ansible inventory
+      #     command: |
+      #       # AWS CLI supported environment variables
+      #       AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+      #       AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+      #       AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+      #       aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+      #       aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
 
-            # Get all public IPs for running ec2 instances with a tag-key Name
-            # If looking for a specific instance, use instances[?Name == 'backend-${WorkflowID}'] to search specific Name
-            # For simplicity the command below will return only one ip for the ec2 instance created in deploy-backend.
+      #       # Get public IP for running ec2 instance with a tag-key Name
+      #       # For ec2 instance created in deploy-backend Name=backend-${workflowID}.
 
-            backend_ip=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            ec2 describe-instances --filters Name=tag-key,Values=Name)
+      #       backend_ip=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+      #       ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>')
 
-            if [[ $backend_ip != "" && -f ".circleci/ansible/inventory.txt" ]]; then
-              echo $backend_ip | tee -a  .circleci/ansible/inventory.txt > /dev/null
-            fi
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
+      #       if [[ $backend_ip != "" && -f ".circleci/ansible/inventory.txt" ]]; then
+      #         echo $backend_ip | tee -a  .circleci/ansible/inventory.txt > /dev/null
+      #       fi
+      #     environment:
+      #       PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+      #       PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+      #       PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - project/.circleci/ansible/inventory.txt
 
 # Here's where you will add some code to rollback on failure
 # ----------------------------------------------------------
