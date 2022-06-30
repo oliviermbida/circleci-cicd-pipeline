@@ -891,6 +891,7 @@ jobs:
               export HOME=$(getent passwd $(id -un) | cut -d: -f6)
             fi
             printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE' >> "$HOME/.ssh/known_hosts"
+            chmod 0600 "$HOME/.ssh/known_hosts"
             if [ -f "$HOME/.ssh/id_ed25519" ]; then
               rm -f "$HOME/.ssh/id_ed25519"
             fi
@@ -914,23 +915,66 @@ jobs:
           command: |
             #        
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/configure-server.yml
-      - persist_to_workspace:
-          root: $HOME
-          paths:
-            - project/.circleci/ansible/inventory.ini
-            - .ssh/id_ed25519
-            - .ssh/known_hosts
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - project/.circleci/ansible/inventory.ini
+      #       - .ssh/id_ed25519
+      #       - .ssh/known_hosts
 
-#   run-migrations:
-#     docker:
-#       # Docker image here that supports NodeJS
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Run migrations
-#           command: |
-#             # Your code here
-#             exit 1
+  run-migrations:
+    docker:
+      - image: cimg/python:3.9.13-node
+    steps:
+      - install_aws
+      - checkout
+      - check_master
+      - run:
+          name: Run migrations
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+
+            TYPEORM_USERNAME=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."username")
+
+            TYPEORM_PASSWORD=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."password")
+
+            TYPEORM_DATABASE=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
+
+            TYPEORM_PORT=$(aws rds describe-db-instances \
+                --db-instance-identifier backendDB-<<pipeline.workflowID>> \
+                --output text --query "DBInstances[*].Endpoint.Port")
+
+            TYPEORM_HOST=$(aws ssm get-parameter \
+                --db-instance-identifier backendDB-<<pipeline.workflowID>> \
+                --output text --query "DBInstances[*].Endpoint.Address")
+            #
+            npm i
+            npm run migrations
+
+            # cleanup
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
+            unset TYPEORM_USERNAME
+            unset TYPEORM_PASSWORD
+            unset TYPEORM_DATABASE
+            unset TYPEORM_HOST
+            unset TYPEORM_PORT
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY 
 #       - run:
 #           name: Send migration results to memstash
 #           command: |
@@ -1101,8 +1145,12 @@ workflows:
           context:
             - org-global
             - aws-context
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: 
+            - configure-infrastructure
+          context:
+            - org-global
+            - aws-context
       # - deploy-frontend:
       #     requires: [run-migrations]
       # - deploy-backend:
