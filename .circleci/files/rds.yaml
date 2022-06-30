@@ -33,6 +33,7 @@ Resources:
         Ref: DBAllocatedStorage
       MasterUserPassword: '{{resolve:secretsmanager:UdaPeopleDB:SecretString:password}}'
       PubliclyAccessible: true
+      DBInstanceIdentifier: !Sub 'backendDB-${WorkflowID}'
       Tags:
         - Key: Name
           Value: !Sub 'backendDB-${WorkflowID}'
