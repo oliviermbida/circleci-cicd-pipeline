@@ -1,0 +1,31 @@
+---
+
+- name: Update packages
+  ansible.builtin.apt:
+    update_cache: yes
+- name: install the NodeSource PPA
+  ansible.builtin.shell: 'curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -'
+  args:
+    warn: no
+- name: Install required packages
+  ansible.builtin.apt: name={{ item }} state=present
+  with_items:
+    - git
+    - curl
+    - wget
+    - nginx
+    - nodejs
+    - build-essential
+- name: install PM2
+  ansible.builtin.shell: |
+    npm install pm2@latest -g
+    pm2 startup systemd
+    env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+    pm2 save
+  args:
+    executable: /bin/bash
+- name: start PM2 service unit
+  ansible.builtin.systemd:
+    state: started
+    name: pm2-ubuntu
+    enabled: yes
