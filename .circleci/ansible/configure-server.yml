@@ -1,0 +1,55 @@
+---
+
+- name: "configuration play." 
+  hosts: web
+  # no_log: true
+  any_errors_fatal: true
+  become: true
+  become_method: sudo
+  become_user: root  
+  gather_facts: false
+  vars:
+    - ansible_python_interpreter: /usr/bin/python3
+    - ansible_host_key_checking: false
+    - ansible_stdout_callback: yaml
+
+  pre_tasks:
+    - name: "Wait 15 seconds for target connection to become reachable/usable."
+      wait_for_connection:
+        timeout: 15
+    - name: Check for Python
+      ansible.builtin.raw: test -e /usr/bin/python3
+      changed_when: false
+      failed_when: false
+      register: python3_test
+    - name: "Install python3 for Ansible."
+      ansible.builtin.raw: apt -y update && apt install -y python3-minimal
+      when: python3_test.rc != 0
+    # - name: "Install python"
+    #   ansible.builtin.package: 
+    #     name: python3
+    #     state: present
+    #   when: python_test.rc != 0
+    # Allow OpenSSH. (Note that as ufw manages its own state, simply removing
+    # a rule=allow task can leave those ports exposed. Either use delete=yes
+    # or a separate state=reset task)
+    # - name: Allow OpenSSH rule
+    #   ufw:
+    #     rule: allow
+    #     name: OpenSSH
+    # - name: enable ufw
+    #   ufw:
+    #     state: enabled
+  # Get the environment variables from CircleCI and add to the EC2 instance
+  # {{ hostvars[web][ENVIRONMENT] }}
+  # environment:
+  #   - ENVIRONMENT: production
+  #   - TYPEORM_CONNECTION: "{{ lookup('ansible.builtin.env', 'TYPEORM_CONNECTION')}}"  
+  #   - TYPEORM_HOST: "{{ lookup('ansible.builtin.env', 'TYPEORM_HOST')}}" 
+  #   - TYPEORM_PORT: "{{ lookup('ansible.builtin.env', 'TYPEORM_PORT')}}" 
+  #   - TYPEORM_USERNAME: "{{ lookup('ansible.builtin.env', 'TYPEORM_USERNAME')}}" 
+  #   - TYPEORM_PASSWORD: "{{ lookup('ansible.builtin.env', 'TYPEORM_PASSWORD')}}" 
+  #   - TYPEORM_DATABASE: "{{ lookup('ansible.builtin.env', 'TYPEORM_DATABASE')}}" 
+  #   - TYPEORM_ENTITIES: "{{ lookup('ansible.builtin.env', 'TYPEORM_ENTITIES')}}" 
+  roles:
+    - configure-server
