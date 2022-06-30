@@ -386,8 +386,8 @@ commands:
               --s3-bucket <<parameters.s3bucket>> \
               --output-template-file stacks_v<<parameters.version>>-packaged.yaml
             # cleanup
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -420,8 +420,8 @@ commands:
               --change-set-type <<parameters.type>> )
 
             # cleanup
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -452,8 +452,8 @@ commands:
                 sleep 5
             done
             # cleanup
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -473,8 +473,8 @@ commands:
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
             # cleanup
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -507,8 +507,8 @@ commands:
                 sleep 5
             done
             # cleanup
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
@@ -898,11 +898,11 @@ jobs:
             chmod 0600 "~/.ssh/id_ed25519" 
 
             # cleanup
-            unset $EC2_KEY 
-            unset $EC2_USER
-            unset $EC2_HOST
-            unset $AWS_ACCESS_KEY_ID
-            unset $AWS_USER_SECRET_ACCESS_KEY
+            unset EC2_KEY 
+            unset EC2_USER
+            unset EC2_HOST
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
             PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
