@@ -824,30 +824,100 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
-#   configure-infrastructure:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-        # - checkout
-#       # Add ssh keys with fingerprint
+  configure-infrastructure:
+    docker:
+      - image: cimg/python:3.9.13-node
+      # build-essential 12.8ubuntu1.1, curl 7.68.0, docker 20.10.14, 
+      # docker-compose Docker Compose version v2.4.1 v2.4.1, 
+      # dockerize v0.6.1, git 2.36.1, jq 1.6, node 16.15.0, pip 22.0.4, 
+      # pipenv 2022.5.2, poetry 1.1.13, pyenv 2.3.0, python2 2.7.18, 
+      # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
+    steps:
+      - install_aws
+      - checkout
+      - check_master
       # - add_ssh_keys:
       #     fingerprints:
-      #       - "<copy-paste-fingerprint-here>"
-#       # attach workspace
+      #       - "<<fingerprint>>"
       # - attach_workspace:
       #     at: ~/
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure      
+      - run: 
+          name: Install ansible
+          command: |
+            export PIP=$(which pip pip3 | head -1)
+            if [[ -n $PIP ]]; then
+              if which sudo > /dev/null; then
+                sudo $PIP install ansible --upgrade
+              else
+                $PIP install ansible --upgrade --user
+              fi 
+            else
+              echo "Unable to install Ansible. Please install pip."
+              exit 1
+            fi
+      - run: 
+          name: Configure ansible
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+
+            # Access secrets which can be rotated by the authorized IAM user
+            # without the need of manually deleting and adding new env variables in Circleci
+            
+            EC2_KEY=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleSSH \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."value")
+
+            EC2_USER=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleSSH \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
+
+            EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
+
+            # Add back-end connection details to ansible inventory
+            # default host inventory /etc/ansible/hosts
+            # ansible_ssh_private_key_file=./web-key.pem
+
+            if [[ $EC2_HOST != "" && -f ".circleci/ansible/inventory.ini" ]]; then
+              echo "web ansible_host=$EC2_HOST ansible_connection=ssh  ansible_user=$EC2_USER" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
+            fi          
+            chmod 0600 ".circleci/ansible/inventory.ini"
+
+            # SSH connection configuration
+            printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE=' >> "~/.ssh/known_hosts"
+            if [ -f "~/.ssh/id_ed25519" ]; then
+              rm -f "~/.ssh/id_ed25519"
+            fi
+            printf "%s" "$EC2_KEY" > "~/.ssh/id_ed25519"
+            chmod 0600 "~/.ssh/id_ed25519" 
+
+            # cleanup
+            unset $EC2_KEY 
+            unset $EC2_USER
+            unset $EC2_HOST
+            unset $AWS_ACCESS_KEY_ID
+            unset $AWS_USER_SECRET_ACCESS_KEY
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY           
+      - run:
+          name: Configure server
+          command: |
+            #        
+            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/configure-server.yml
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.ini
+            - .ssh/id_ed25519
+            - .ssh/known_hosts
 
 #   run-migrations:
 #     docker:
@@ -1023,8 +1093,12 @@ workflows:
           context:
             - org-global
             - aws-context
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: 
+            - deploy-infrastructure
+          context:
+            - org-global
+            - aws-context
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
