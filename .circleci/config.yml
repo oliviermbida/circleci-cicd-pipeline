@@ -11,6 +11,19 @@ parameters:
     type: string
     default: cli803394216630
 commands:
+  check_job:
+    description: Stop job if false  
+    parameters:
+      start_job:
+        type: boolean
+        default: true        
+    steps: 
+      - when:
+          condition: 
+            not: << parameters.start_job >>
+          steps:
+            - run: circleci-agent step halt      
+
 # destroy-environment:
 # Cloudformation is set to rollback to the last successfull update.
 # Therefore this is a nuclear option to destroy the entire stack.
@@ -111,7 +124,7 @@ commands:
       - run:
           name: Commit to GitHub
           command: |
-            if [[ "${CIRCLE_USERNAME}" = $USER_NAME && -z "${CIRCLE_PULL_REQUEST}" ]]
+            if [[ -z "${CIRCLE_PULL_REQUEST}" ]]
             then
               printf "%s" 'github.com ssh-ed25519 43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc' >> "$HOME/.ssh/known_hosts"
               if [ "${HOME}" = "/" ]
@@ -560,6 +573,8 @@ jobs:
   build-frontend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       - restore_cache:
@@ -586,6 +601,8 @@ jobs:
   build-backend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       - restore_cache:
@@ -612,6 +629,8 @@ jobs:
   test-frontend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -644,6 +663,8 @@ jobs:
   test-backend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -676,6 +697,8 @@ jobs:
   scan-frontend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -692,8 +715,8 @@ jobs:
             #npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
 # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
-      # - commit_to_github:
-      #     commit_message: "NO_BUILD [skip ci] Pipeline frontend audit fix"
+      - commit_to_github:
+          commit_message: "NO_BUILD frontend npm audit fix"
       # - jira/notify
       - save_cache:
           paths: 
@@ -705,6 +728,8 @@ jobs:
   scan-backend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -738,6 +763,8 @@ jobs:
   scan-sonar:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: false
       - checkout
       - check_master
       - scan:
@@ -751,6 +778,8 @@ jobs:
     docker:
       - image: cimg/python:3.9.13-node
     steps:
+      - check_job:
+          start_job: false
       - install_aws
       - checkout
       - check_master
@@ -855,6 +884,8 @@ jobs:
       # pipenv 2022.5.2, poetry 1.1.13, pyenv 2.3.0, python2 2.7.18, 
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
+      - check_job:
+          start_job: false
       - install_aws
       - checkout
       - check_master
@@ -947,6 +978,8 @@ jobs:
   run-migrations:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: true
       - install_aws
       - checkout
       - check_master   
@@ -958,6 +991,7 @@ jobs:
       - run:
           name: Run migrations
           command: |
+            killall ssh
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
@@ -1014,6 +1048,8 @@ jobs:
   deploy-frontend:
     <<: *defaults
     steps:
+      - check_job:
+          start_job: true
       - install_aws
       - checkout
       - check_master
@@ -1052,8 +1088,6 @@ jobs:
               ./dist s3://udapeoples3-<<pipeline.parameters.workflowID>>/ --delete \
               --acl public-read \
               --cache-control "max-age=86400"   
-            --cache-control "max-age=86400"   
-              --cache-control "max-age=86400"   
       - save_cache:
           paths: 
             - frontend/node_modules
@@ -1072,7 +1106,7 @@ jobs:
 #       - run:
 #           name: Deploy backend
 #           command: |
-#             # your code here
+#            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
 #       # Here's where you will add some code to rollback on failure  
 
 #   smoke-test:
