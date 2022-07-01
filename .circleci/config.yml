@@ -1046,12 +1046,14 @@ jobs:
             PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
             PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY 
       - run: 
-        name: Deploy frontend objects
-        command: |+
-          aws s3 sync \
-            ./dist s3://udapeoples3-<<pipeline.parameters.workflowID>>/ --delete \
-            --acl public-read \
+          name: Deploy frontend objects
+          command: |+
+            aws s3 sync \
+              ./dist s3://udapeoples3-<<pipeline.parameters.workflowID>>/ --delete \
+              --acl public-read \
+              --cache-control "max-age=86400"   
             --cache-control "max-age=86400"   
+              --cache-control "max-age=86400"   
       - save_cache:
           paths: 
             - frontend/node_modules
