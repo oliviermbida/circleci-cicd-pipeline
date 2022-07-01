@@ -1020,6 +1020,8 @@ jobs:
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             cd ./backend 
+            npm cache clean --force
+            rm -rf node_modules
             npm i
             npm run migrations
 
