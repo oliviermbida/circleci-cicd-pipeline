@@ -980,7 +980,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - install_aws
       - checkout
       - check_master   
@@ -1022,6 +1022,7 @@ jobs:
             cd ./backend 
             npm cache clean --force
             rm -rf node_modules
+            rm -f package-lock.json
             npm i
             npm run migrations
 
