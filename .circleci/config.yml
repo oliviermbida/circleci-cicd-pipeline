@@ -949,7 +949,7 @@ jobs:
     steps:
       - install_aws
       - checkout
-      - check_master
+      - check_master   
       - restore_cache:
           keys: 
             - v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
@@ -1011,32 +1011,51 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure      
-        # - name: Front-end S3 Sync
-        #   command: |+
-        #     aws s3 sync \
-        #       ./dist s3://$CFN_BUCKET/dist --delete \
-        #       --acl public-read \
-        #       --cache-control "max-age=86400"                    
+  deploy-frontend:
+    <<: *defaults
+    steps:
+      - install_aws
+      - checkout
+      - check_master
+      - restore_cache:
+          keys: 
+            - v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}
+            # fallback to using the latest cache 
+            - v1-frontend-deps-
+      - run:
+          name: Get backend url and build
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+
+            EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
+            #
+            export API_URL="http://${EC2_HOST}:3030"
+            #echo "${API_URL}" 
+            cd ./frontend
+            npm i
+            npm run build
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY 
+      - run: 
+        name: Deploy frontend objects
+        command: |+
+          aws s3 sync \
+            ./dist s3://udapeoples3-<<pipeline.parameters.workflowID>>/ --delete \
+            --acl public-read \
+            --cache-control "max-age=86400"   
+      - save_cache:
+          paths: 
+            - frontend/node_modules
+          key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}                 
 #   deploy-backend:
 #     docker:
 #       # Docker image here that supports Ansible
@@ -1185,8 +1204,12 @@ workflows:
           context:
             - org-global
             - aws-context
-      # - deploy-frontend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: 
+            - run-migrations
+          context:
+            - org-global
+            - aws-context
       # - deploy-backend:
       #     requires: [run-migrations]
       # - smoke-test:
