@@ -993,7 +993,8 @@ jobs:
             then
               export HOME=$(getent passwd $(id -un) | cut -d: -f6)
             fi
-            printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE' >> "$HOME/.ssh/known_hosts"
+            #printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE' >> "$HOME/.ssh/known_hosts"
+            ssh-keyscan -H $EC2_HOST >> $HOME/.ssh/known_hosts
             chmod 0600 "$HOME/.ssh/known_hosts"
             if [ -f "$HOME/.ssh/id_ed25519" ]; then
               rm -f "$HOME/.ssh/id_ed25519"
