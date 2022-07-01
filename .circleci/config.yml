@@ -980,7 +980,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - install_aws
       - checkout
       - check_master   
