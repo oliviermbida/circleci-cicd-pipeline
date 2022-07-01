@@ -178,4 +178,4 @@ I wrote this command which is using the circleci-agent:
 
 I just had to switch it to true in any job I wanted to run and this meant I could focus on the issue with the migration step as seen in the screenshot.
 
-![skipping jobs](/docs/Troubleshoting_by_skiping_jobs.png)
+ ![skipping jobs](/docs/Troubleshooting_by_skiping_jobs.png)
