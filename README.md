@@ -179,3 +179,24 @@ I wrote this command which is using the circleci-agent:
 I just had to switch it to true in any job I wanted to run and this meant I could focus on the issue with the migration step as seen in the screenshot.
 
  ![skipping jobs](/docs/screenshots/Troubleshooting_by_skiping_jobs.png)
+
+You can use this skip job functionality to fix the audits found in the scan-frontend and scan-backend jobs.
+I will use it to commit the audits to this project in github.
+Here is how the security issues are reported by github, please note the 168 vulnerabilities figure :
+
+![Github security alerts](/docs/screenshots/security_github.png)
+
+Now screenshot after I ran the scan-frontend job with the commit_to_github command.
+Please note all other jobs are disabled with the check_job command above.
+You can see down to 82 vulnerabilities detected by github.
+Please also not that the commit did not run the Circleci pipeline.
+
+![Github security alerts frontend fix](/docs/screenshots/security_github_frontend_fix.png)
+
+![Github security alerts audit](/docs/screenshots/security_audit_frontend.png)
+
+I did the same with the backend and it is now down to 22 vulnerabilities.
+So more to do to clean it up using other security tools in the workflow.
+
+![Github security alerts backend fix](/docs/screenshots/security_github_backend_fix.png)
+
