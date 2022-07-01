@@ -107,16 +107,18 @@ commands:
       # along with a relevant IdentityFile option to use the key.
       - add_ssh_keys:
           fingerprints:
-            - "<copy-paste-fingerprint-here>"
+            - "43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc"
       - run:
           name: Commit to GitHub
           command: |
             if [[ "${CIRCLE_USERNAME}" = $USER_NAME && -z "${CIRCLE_PULL_REQUEST}" ]]
             then
-              printf "%s" 'github.com ssh-rsa <copy-paste-fingerprint-here>
-              ' >> "$HOME/.ssh/known_hosts"
-
-              export GIT_SSH_COMMAND='ssh -i "$HOME/.ssh/id_rsa" -o UserKnownHostsFile="$HOME/.ssh/known_hosts"'
+              printf "%s" 'github.com ssh-ed25519 43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc' >> "$HOME/.ssh/known_hosts"
+              if [ "${HOME}" = "/" ]
+              then
+                export HOME=$(getent passwd $(id -un) | cut -d: -f6)
+              fi
+              export GIT_SSH_COMMAND='ssh -i "$HOME/.ssh/id_ed25519" -o UserKnownHostsFile="$HOME/.ssh/known_hosts"'
               echo "Committing to GitHub"
 
               # use git+ssh instead of https
@@ -719,8 +721,12 @@ jobs:
             #npm audit --audit-level=critical 
             npm audit fix --audit-level=critical --force
 # Will be a good idea to commit the audit fix. This should be run by authorize $USER_NAME. 
-      # - commit_to_github:
-      #     commit_message: "NO_BUILD [skip ci] backend audit fix"
+      - commit_to_github:
+          commit_message: "NO_BUILD backend npm audit fix"
+      # - persist_to_workspace:
+      #     root: .
+      #     paths:
+      #       - '*'
       # - jira/notify
       - save_cache:
           paths: 
