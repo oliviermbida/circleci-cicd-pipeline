@@ -11,6 +11,7 @@ parameters:
     type: string
     default: cli803394216630
 commands:
+# Useful if you don't want to re-run deploy-infrastructure which takes a while.
   check_job:
     description: Stop job if false  
     parameters:
@@ -983,15 +984,14 @@ jobs:
       - install_aws
       - checkout
       - check_master   
-      - restore_cache:
-          keys: 
-            - v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-            # fallback to using the latest cache 
-            - v1-backend-deps-
+      # - restore_cache:
+      #     keys: 
+      #       - v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+      #       # fallback to using the latest cache 
+      #       - v1-backend-deps-
       - run:
           name: Run migrations
           command: |
-            killall ssh
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
             AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
@@ -1041,10 +1041,10 @@ jobs:
 #             # Your code here
 #             exit 1
 #      # Here's where you will add some code to rollback on failure      
-      - save_cache:
-          paths: 
-            - backend/node_modules
-          key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+      # - save_cache:
+      #     paths: 
+      #       - backend/node_modules
+      #     key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
   deploy-frontend:
     <<: *defaults
     steps:
