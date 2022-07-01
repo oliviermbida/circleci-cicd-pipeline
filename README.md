@@ -154,3 +154,28 @@ You can ssh to the host and check the configuration. In this case configure-serv
 
 Once tested they be added to the configuration stage in the pipeline as seen in this [screenshot](/docs/screenshots/SCREENSHOT06_config.png)
 
+
+
+
+# Troubleshooting by skipping jobs
+
+Especially when you have already deployed infrastructure and you don't really want to pull down the whole pipeline.
+In my case below, I had some issues with the migration step in the pipeline because I had tested ssh tunneling earlier.
+I wrote this command which is using the circleci-agent:
+
+        check_job:
+            description: Stop job if false  
+            parameters:
+            start_job:
+                type: boolean
+                default: true        
+            steps: 
+            - when:
+                condition: 
+                    not: << parameters.start_job >>
+                steps:
+                    - run: circleci-agent step halt   
+
+I just had to switch it to true in any job I wanted to run and this meant I could focus on the issue with the migration step as seen in the screenshot.
+
+![skipping jobs](/docs/Troubleshoting_by_skiping_jobs.png)
