@@ -939,7 +939,6 @@ jobs:
       #       - .ssh/known_hosts
 
   run-migrations:
-    docker:
     <<: *defaults
     steps:
       - install_aws
