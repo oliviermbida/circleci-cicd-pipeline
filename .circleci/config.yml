@@ -699,7 +699,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -730,7 +730,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - checkout
       - check_master
       # Restore from cache
