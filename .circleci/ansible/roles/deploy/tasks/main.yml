@@ -1,0 +1,17 @@
+...
+
+- name: Copy backend files
+  become: true
+  copy:
+    src: "/home/circleci/project/backend/dist/"
+    dest: /var/www/app/
+- name: Install packages package.json using the npm
+  npm:
+    path: /var/www/app 
+    state: present
+- name: PM2 start app 
+  ansible.builtin.shell: |
+    pm2 start --name app npm -- start
+  args:
+    chdir: /var/www/app
+    executable: /bin/bash
