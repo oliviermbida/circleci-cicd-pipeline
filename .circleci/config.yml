@@ -338,8 +338,15 @@ commands:
                 $PIP install ansible --upgrade --user
               fi 
             else
-              echo "Unable to install Ansible. Please install pip."
-              exit 1
+              if which sudo > /dev/null; then
+                sudo apt update
+                sudo apt install python3-pip
+                sudo pip3 install ansible --upgrade
+              else 
+                apt update
+                apt install python3-pip
+                pip3 install ansible --upgrade
+              fi
             fi 
   configure_ansible:
     description: >
@@ -888,7 +895,7 @@ jobs:
       - image: cimg/python:3.9.13-node
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - install_aws
       - checkout
       - check_master
@@ -972,7 +979,7 @@ jobs:
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - install_aws
       - checkout
       - check_master
