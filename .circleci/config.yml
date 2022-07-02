@@ -476,7 +476,7 @@ commands:
               --capabilities <<parameters.capabilities>> \
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
-       - run:
+      - run:
           name: <<parameters.changename>> Status 
           command: |
             while [ 1 ]   # Endless loop.
