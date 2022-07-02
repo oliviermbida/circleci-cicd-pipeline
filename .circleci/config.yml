@@ -141,7 +141,7 @@ commands:
               git config user.email $USER_EMAIL
               git config user.name $USER_NAME
               git checkout master
-              git commit -am "<<parameters.commit_message>>"
+              git commit --allow-empty -am "<<parameters.commit_message>>"
               git push origin master
             else
               echo "No commit to GitHub"
