@@ -579,12 +579,23 @@ jobs:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}
-      # - when:
-      #     condition: on_fail
-      #     steps:
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+      ##You can revert/reset to the previous commit using its commit_sha
       #       - revert-commit:
-      #           commit_sha: $CIRCLE_SHA1  
-      # - jira/notify
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   build-backend:
     <<: *defaults
     steps:
@@ -607,12 +618,23 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-      # - when:
-      #     condition: on_fail
-      #     steps:
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+      ##You can revert/reset to the previous commit using its commit_sha
       #       - revert-commit:
-      #           commit_sha: $CIRCLE_SHA1  
-      # - jira/notify
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   test-frontend:
     <<: *defaults
     steps:
@@ -632,21 +654,33 @@ jobs:
             cd ./frontend 
             npm i
             npm test 
-      # - jira/notify
       - save_cache:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}              
       - slack/notify:
-          event: fail
-          template: basic_fail_1
-      - slack/notify:
           event: pass
           template: basic_success_1
-      # - run:
-      #     name: Notify failed Tests
-      #     command: curl --data fail_tests.log http://example.com/error_logs
-      #     when: on_fail             
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+      #      - run:
+      #         name: Notify failed Tests
+      #         command: curl --data fail_tests.log http://example.com/error_logs
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can revert/reset to the previous commit using its commit_sha
+      #       - revert-commit:
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false            
   test-backend:
     <<: *defaults
     steps:
@@ -670,17 +704,29 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-      # - jira/notify          
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
       - slack/notify:
           event: pass
           template: basic_success_1
-      # - run:
-      #     name: Notify failed Tests
-      #     command: curl --data fail_tests.log http://example.com/error_logs
-      #     when: on_fail             
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+      #      - run:
+      #         name: Notify failed Tests
+      #         command: curl --data fail_tests.log http://example.com/error_logs
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can revert/reset to the previous commit using its commit_sha
+      #       - revert-commit:
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false       
   scan-frontend:
     <<: *defaults
     steps:
@@ -701,22 +747,38 @@ jobs:
             npm install 
             #npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
-# Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
+    # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD frontend npm audit fix"
-      # - jira/notify
       - save_cache:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }} 
       - slack/notify:
-          event: fail
-          template: basic_fail_1
+        event: pass
+        template: basic_success_1
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can revert/reset to the previous commit using its commit_sha
+      #       - revert-commit:
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   scan-backend:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -732,21 +794,33 @@ jobs:
             npm install
             #npm audit --audit-level=critical 
             npm audit fix --audit-level=critical --force
-# Will be a good idea to commit the audit fix. This should be run by authorize $USER_NAME. 
+    # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD backend npm audit fix"
-      # - persist_to_workspace:
-      #     root: .
-      #     paths:
-      #       - '*'
-      # - jira/notify
       - save_cache:
           paths: 
             - backend/node_modules
-          key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+          key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }} 
       - slack/notify:
-          event: fail
-          template: basic_fail_1
+        event: pass
+        template: basic_success_1
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can revert/reset to the previous commit using its commit_sha
+      #       - revert-commit:
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   scan-sonar:
     <<: *defaults
     steps:
@@ -756,11 +830,23 @@ jobs:
       - check_master
       - scan:
           project_root: .
-      # Restore from cache
-      # - jira/notify
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can revert/reset to the previous commit using its commit_sha
+      #       - revert-commit:
+      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+      #
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   deploy-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -817,51 +903,34 @@ jobs:
           changename: s3policy
           type: UPDATE
           version: "1.3"
-# This step has been moved to the next job. 
-      # - run:
-      #     name: Add back-end ip to ansible inventory
-      #     command: |
-      #       # AWS CLI supported environment variables
-      #       AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-      #       AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-      #       AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-      #       aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-      #       aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-
-      #       # Get public IP for running ec2 instance with a tag-key Name
-      #       # For ec2 instance created in deploy-backend Name=backend-${workflowID}.
-
-      #       backend_ip=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-      #       ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>')
-
-      #       if [[ $backend_ip != "" && -f ".circleci/ansible/inventory.txt" ]]; then
-      #         echo $backend_ip | tee -a  .circleci/ansible/inventory.txt > /dev/null
-      #       fi
-      #     environment:
-      #       PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
-      #       PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-      #       PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - project/.circleci/ansible/inventory.txt
-
-# Here's where you will add some code to rollback on failure
 # ----------------------------------------------------------
 # create_changes command exits on failure notify concern individuals here.
 # Cloudformation is set to automatically rollback to last successfull update.
 # You can execute a complete rollback of frontend and backend changes here with the commands below but
 # it will be better to deal with cloudformation rollbacks at AWS end 
-# to avoid an endless loop checking on AWS stack events such as UPDATE_ROLLBACK_COMPLETE
-# if it was a failed UPDATE or CREATE_FAILED if it was a failed CREATE.
-      # - create_changes:
-      #     stackname: $CFN_STACKS
-      #     changename: rollback-deploy
-      #     version: "1.0"  # rollback changes to security_changes and admin user can delete 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+# to avoid an endless loop checking on AWS stack events.
+
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      # rollback changes to security_changes and admin user can delete
+      #     - create_changes:
+      #         stackname: $CFN_STACKS
+      #         changename: rollback-deploy
+      #         version: "1.0"  
+      # 
+      ##You can skip this job and continue with other jobs 
+      ##This job will be passed so that the other jobs can run 
+      ##Use this to check Cloudformation rollback status
+            - check_job:
+                start_job: false
   configure-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -962,6 +1031,20 @@ jobs:
       #       - .ssh/id_ed25519
       #       - .ssh/known_hosts
 
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can skip this job and continue with other jobs 
+      ##This job will fail if the infrastructure does not exist from the previous job
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   run-migrations:
     <<: *defaults
     steps:
@@ -1029,11 +1112,25 @@ jobs:
 #           command: |
 #             # Your code here
 #             exit 1
-#      # Here's where you will add some code to rollback on failure      
       # - save_cache:
       #     paths: 
       #       - backend/node_modules
       #     key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can skip this job and continue with other jobs 
+      ##This job will fail if the infrastructure does not exist from previous jobs
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false
   deploy-frontend:
     <<: *defaults
     steps:
@@ -1080,7 +1177,21 @@ jobs:
       - save_cache:
           paths: 
             - frontend/node_modules
-          key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}                 
+          key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}   
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
+      ##You can skip this job and continue with other jobs 
+      ##This job will fail if the infrastructure does not exist from previous jobs
+      ##This job will be passed so that the other jobs can run 
+            - check_job:
+                start_job: false              
 #   deploy-backend:
 #     docker:
 #       # Docker image here that supports Ansible
