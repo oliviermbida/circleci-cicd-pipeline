@@ -444,9 +444,11 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
+            # configure aws for this job
+            #aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            #aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
+            #chmod 600 $AWS_SHARED_CREDENTIALS_FILE
+            #chmod 600 $AWS_CONFIG_FILE
 
             cd .circleci/files/
             aws cloudformation package --template-file \
@@ -477,9 +479,6 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            #aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-
-            #aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
@@ -504,10 +503,6 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            #aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-
-
-            #aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
@@ -536,9 +531,6 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            #aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-
-            #aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
             # cleanup
             unset AWS_ACCESS_KEY_ID
@@ -557,9 +549,6 @@ commands:
 
             AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
-            #aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-
-            #aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
             while [ 1 ]   # Endless loop.
             do
                 stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
@@ -577,8 +566,8 @@ commands:
             # cleanup
             unset AWS_ACCESS_KEY_ID
             unset AWS_USER_SECRET_ACCESS_KEY
-            rmdir -r $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -r $AWS_CONFIG_FILE
+            #rmdir -r $AWS_SHARED_CREDENTIALS_FILE
+            #rmdir -r $AWS_CONFIG_FILE
           environment:
             PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
             PARAM_AWS_CLI_REGION: <<parameters.region>>
