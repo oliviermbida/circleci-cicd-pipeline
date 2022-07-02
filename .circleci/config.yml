@@ -1193,12 +1193,15 @@ jobs:
       - configure_ansible
       - attach_workspace:
           at: ~/
-      - run:
-          name: Deploy backend
+      - run: 
+          name: build backend
           command: |
             cd ./backend
             npm i
             npm run build
+      - run:
+          name: Deploy backend
+          command: |
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
 
       ##Below are options to deal with a failed job 
