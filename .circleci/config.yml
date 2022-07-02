@@ -592,10 +592,7 @@ jobs:
                 event: fail
                 template: basic_fail_1
             # - jira/notify
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
+
   build-backend:
     <<: *defaults
     steps:
@@ -631,10 +628,7 @@ jobs:
                 event: fail
                 template: basic_fail_1
             # - jira/notify
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
+
   test-frontend:
     <<: *defaults
     steps:
@@ -677,10 +671,7 @@ jobs:
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false            
+           
   test-backend:
     <<: *defaults
     steps:
@@ -723,10 +714,7 @@ jobs:
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false       
+      
   scan-frontend:
     <<: *defaults
     steps:
@@ -770,10 +758,7 @@ jobs:
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
+
   scan-backend:
     <<: *defaults
     steps:
@@ -817,10 +802,6 @@ jobs:
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
   scan-sonar:
     <<: *defaults
     steps:
@@ -843,10 +824,6 @@ jobs:
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
   deploy-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -926,11 +903,6 @@ jobs:
       #         changename: rollback-deploy
       #         version: "1.0"  
       # 
-      ##You can skip this job and continue with other jobs 
-      ##This job will be passed so that the other jobs can run 
-      ##Use this to check Cloudformation rollback status
-            - check_job:
-                start_job: false
   configure-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -1126,11 +1098,6 @@ jobs:
                 event: fail
                 template: basic_fail_1
             # - jira/notify
-      ##You can skip this job and continue with other jobs 
-      ##This job will fail if the infrastructure does not exist from previous jobs
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
   deploy-frontend:
     <<: *defaults
     steps:
@@ -1187,11 +1154,7 @@ jobs:
                 event: fail
                 template: basic_fail_1
             # - jira/notify
-      ##You can skip this job and continue with other jobs 
-      ##This job will fail if the infrastructure does not exist from previous jobs
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false              
+           
 #   deploy-backend:
 #     docker:
 #       # Docker image here that supports Ansible
