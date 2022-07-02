@@ -497,9 +497,6 @@ commands:
           name: Ensure <<parameters.changename>>  exist
           command: |
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
-            # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
       - run:
           name: Creation Status 
           command: |
@@ -517,13 +514,12 @@ commands:
                 fi
                 sleep 5
             done
+      - run:
+          name: Cleanup aws config
+          command: |
             # cleanup
             rmdir -r $AWS_SHARED_CREDENTIALS_FILE
             rmdir -r $AWS_CONFIG_FILE
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
