@@ -979,7 +979,7 @@ jobs:
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - install_aws
       - checkout
       - check_master
@@ -1030,9 +1030,9 @@ jobs:
             #        
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/configure-server.yml
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
-            - project/.circleci/ansible/inventory.ini
+            - .circleci/ansible/inventory.ini
 
       ##Below are options to deal with a failed job 
       # 
@@ -1192,7 +1192,7 @@ jobs:
       - install_ansible
       - configure_ansible
       - attach_workspace:
-          at: ~/
+          at: .
       - run: 
           name: build backend
           command: |
