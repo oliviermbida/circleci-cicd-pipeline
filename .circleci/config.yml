@@ -322,6 +322,64 @@ commands:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
+# Ansible
+  install_ansible:
+    description: >
+      Check if ansible exist
+    steps: 
+      - run: 
+          name: Install ansible
+          command: |
+            export PIP=$(which pip pip3 | head -1)
+            if [[ -n $PIP ]]; then
+              if which sudo > /dev/null; then
+                sudo $PIP install ansible --upgrade
+              else
+                $PIP install ansible --upgrade --user
+              fi 
+            else
+              echo "Unable to install Ansible. Please install pip."
+              exit 1
+            fi 
+  configure_ansible:
+    description: >
+      Configure ansible ssh with aws secrets.
+      IAM Admin user credentials required to share key.
+    steps: 
+      - run: 
+          name: Configure ansible
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+
+            # SSH connection configuration
+            if [ "${HOME}" = "/" ]
+            then
+              export HOME=$(getent passwd $(id -un) | cut -d: -f6)
+            fi
+            printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE' >> "$HOME/.ssh/known_hosts"
+            chmod 0600 "$HOME/.ssh/known_hosts"
+            if [ -f "$HOME/.ssh/id_ed25519" ]; then
+              rm -f "$HOME/.ssh/id_ed25519"
+            fi
+
+            aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/udapeople_ssh_key \
+                --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
+            chmod 0700 "$HOME/.ssh/id_ed25519" 
+
+            # cleanup
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
+            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
 # create_changes
 # Multi IAM User and roles needed for various steps in creating
 # aws infrasturcture.
@@ -720,7 +778,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -764,7 +822,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - checkout
       - check_master
       # Restore from cache
@@ -830,7 +888,7 @@ jobs:
       - image: cimg/python:3.9.13-node
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - install_aws
       - checkout
       - check_master
@@ -914,31 +972,14 @@ jobs:
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - install_aws
       - checkout
       - check_master
-      # - add_ssh_keys:
-      #     fingerprints:
-      #       - "<<fingerprint>>"
-      # - attach_workspace:
-      #     at: ~/
+      - install_ansible
+      - configure_ansible
       - run: 
-          name: Install ansible
-          command: |
-            export PIP=$(which pip pip3 | head -1)
-            if [[ -n $PIP ]]; then
-              if which sudo > /dev/null; then
-                sudo $PIP install ansible --upgrade
-              else
-                $PIP install ansible --upgrade --user
-              fi 
-            else
-              echo "Unable to install Ansible. Please install pip."
-              exit 1
-            fi
-      - run: 
-          name: Configure ansible
+          name: Add back-end ip to inventory
           command: |
             # AWS CLI supported environment variables
             AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
@@ -967,42 +1008,24 @@ jobs:
             fi          
             chmod 0600 ".circleci/ansible/inventory.ini"
 
-            # SSH connection configuration
-            if [ "${HOME}" = "/" ]
-            then
-              export HOME=$(getent passwd $(id -un) | cut -d: -f6)
-            fi
-            printf "%s" '$EC2_HOST ssh-ed25519 QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE' >> "$HOME/.ssh/known_hosts"
-            chmod 0600 "$HOME/.ssh/known_hosts"
-            if [ -f "$HOME/.ssh/id_ed25519" ]; then
-              rm -f "$HOME/.ssh/id_ed25519"
-            fi
-
-            aws ssm get-parameter \
-                --name /aws/reference/secretsmanager/udapeople_ssh_key \
-                --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
-            chmod 0700 "$HOME/.ssh/id_ed25519" 
-
             # cleanup
             unset EC2_USER
             unset EC2_HOST
             unset AWS_ACCESS_KEY_ID
             unset AWS_USER_SECRET_ACCESS_KEY
           environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
+            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
             PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY           
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY           
       - run:
           name: Configure server
           command: |
             #        
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/configure-server.yml
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - project/.circleci/ansible/inventory.ini
-      #       - .ssh/id_ed25519
-      #       - .ssh/known_hosts
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.ini
 
       ##Below are options to deal with a failed job 
       # 
@@ -1151,22 +1174,35 @@ jobs:
                 template: basic_fail_1
             # - jira/notify
            
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
-#       # Here's where you will add some code to rollback on failure  
+  deploy-backend:
+    <<: *defaults
+    steps:
+      - check_job:
+          start_job: true
+      - install_aws
+      - checkout
+      - check_master
+      - install_ansible
+      - configure_ansible
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Deploy backend
+          command: |
+            cd ./backend
+            npm i
+            npm run build
+            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
+
+      ##Below are options to deal with a failed job 
+      # 
+      - when:
+          condition: on_fail
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+            # - jira/notify
 
 #   smoke-test:
 #     docker:
@@ -1305,8 +1341,12 @@ workflows:
           context:
             - org-global
             - aws-context
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: 
+          - run-migrations
+          context:
+            - org-global
+            - aws-context
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
