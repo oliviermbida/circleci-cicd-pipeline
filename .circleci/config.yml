@@ -447,8 +447,6 @@ commands:
             # configure aws for this job
             aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
-            chmod 600 $AWS_SHARED_CREDENTIALS_FILE
-            chmod 600 $AWS_CONFIG_FILE
 
             cd .circleci/files/
             aws cloudformation package --template-file \
