@@ -1012,11 +1012,6 @@ jobs:
                 event: fail
                 template: basic_fail_1
             # - jira/notify
-      ##You can skip this job and continue with other jobs 
-      ##This job will fail if the infrastructure does not exist from the previous job
-      ##This job will be passed so that the other jobs can run 
-            - check_job:
-                start_job: false
   run-migrations:
     <<: *defaults
     steps:
