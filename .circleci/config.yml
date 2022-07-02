@@ -755,8 +755,8 @@ jobs:
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }} 
       - slack/notify:
-        event: pass
-        template: basic_success_1
+          event: pass
+          template: basic_success_1
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -802,8 +802,8 @@ jobs:
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }} 
       - slack/notify:
-        event: pass
-        template: basic_success_1
+          event: pass
+          template: basic_success_1
       ##Below are options to deal with a failed job 
       # 
       - when:
