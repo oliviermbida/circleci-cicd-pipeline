@@ -470,37 +470,15 @@ commands:
       - run:
           name: Apply <<parameters.changename>> changes
           command: |
-            # AWS CLI supported environment variables
-            #AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            #AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            #AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
               --capabilities <<parameters.capabilities>> \
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
-
-            # cleanup
-            #unset AWS_ACCESS_KEY_ID
-            #unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
-      - run:
+       - run:
           name: <<parameters.changename>> Status 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
             while [ 1 ]   # Endless loop.
             do
                 change_Status=$(aws --output text --query "Status" cloudformation describe-change-set \
@@ -512,41 +490,16 @@ commands:
                 fi
                 sleep 5
             done
-            # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run:
           name: Ensure <<parameters.changename>>  exist
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
             aws cloudformation execute-change-set --change-set-name <<parameters.changename>> --stack-name <<parameters.stackname>>
             # cleanup
             unset AWS_ACCESS_KEY_ID
             unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
       - run:
           name: Creation Status 
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
             while [ 1 ]   # Endless loop.
             do
                 stack_Status=$(aws --output text --query "Stacks[0].StackStatus" cloudformation describe-stacks \
@@ -562,8 +515,6 @@ commands:
                 sleep 5
             done
             # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
             rmdir -r $AWS_SHARED_CREDENTIALS_FILE
             rmdir -r $AWS_CONFIG_FILE
           environment:
