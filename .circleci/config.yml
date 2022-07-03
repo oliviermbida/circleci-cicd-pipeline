@@ -60,10 +60,6 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
 
             aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
@@ -72,10 +68,7 @@ commands:
             if [[ <<parameters.workflow_id>> == $CIRCLE_WORKFLOW_ID ]]; then
             aws cloudformation delete-stack --stack-name <<parameters.stackname>>
             fi
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
 #     parameters:
@@ -526,8 +519,8 @@ commands:
           name: Cleanup aws config
           command: |
             # cleanup
-            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -rf $AWS_CONFIG_FILE
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
@@ -973,8 +966,8 @@ jobs:
           name: Cleanup aws config
           command: |
             # cleanup
-            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -rf $AWS_CONFIG_FILE
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -1049,8 +1042,8 @@ jobs:
           name: Cleanup aws config
           command: |
             # cleanup
-            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -rf $AWS_CONFIG_FILE
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -1103,8 +1096,8 @@ jobs:
           name: Cleanup aws config
           command: |
             # cleanup
-            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -rf $AWS_CONFIG_FILE
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -1144,8 +1137,8 @@ jobs:
           name: Cleanup config
           command: |
             # cleanup aws and ansible cfg
-            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -rf $AWS_CONFIG_FILE
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
             rm -f .circleci/ansible/inventory.ini
       ##Below are options to deal with a failed job 
       # 
