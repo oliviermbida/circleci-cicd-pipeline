@@ -322,6 +322,44 @@ commands:
             PARAM_AWS_CLI_BINARY_DIR: <<parameters.binary-dir>>
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
+  configure_aws:
+    descripttion: >
+      configure aws credentials
+    parameters:
+      access_key_id: 
+        type: string
+        description: AWS access key Id
+        default: $AWS_USER_ACCESS_KEY_ID
+      secret_access_key: 
+        type: string
+        description: AWS secret access key
+        default: $AWS_USER_SECRET_ACCESS_KEY
+      region: 
+        type: string
+        description: AWS default region
+        default: $AWS_DEFAULT_REGION
+    steps: 
+      - run:
+          name: Configure aws 
+          command: |
+            # AWS CLI supported environment variables
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
+
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
+
+            # configure aws for this job
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
+
+            # cleanup
+            unset AWS_ACCESS_KEY_ID
+            unset AWS_USER_SECRET_ACCESS_KEY
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
+            PARAM_AWS_CLI_REGION: <<parameters.region>>
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
 # Ansible
   install_ansible:
     description: >
@@ -352,18 +390,11 @@ commands:
     description: >
       Configure ansible ssh with aws secrets.
       IAM Admin user credentials required to share key.
+      Requires aws cli
     steps: 
       - run: 
           name: Configure ansible
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-
             # SSH connection configuration
             if [ "${HOME}" = "/" ]
             then
@@ -375,18 +406,12 @@ commands:
               rm -f "$HOME/.ssh/id_ed25519"
             fi
 
+            #access ssh key from aws secrets
             aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/udapeople_ssh_key \
                 --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
             chmod 0700 "$HOME/.ssh/id_ed25519" 
 
-            # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
 # create_changes
 # Multi IAM User and roles needed for various steps in creating
 # aws infrasturcture.
@@ -434,27 +459,10 @@ commands:
         type: string
         default: UPDATE 
     steps:
-      - run:
-          name: Configure aws 
-          command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            # configure aws for this job
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
-
-            # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.access_key_id>>
-            PARAM_AWS_CLI_REGION: <<parameters.region>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.secret_access_key>>
+      - configure_aws:
+          access_key_id: <<parameters.access_key_id>>
+          secret_access_key: <<parameters.secret_access_key>>
+          region: <<parameters.region>>
       - run:
           name: Upload artifacts to S3 
           command: |
@@ -518,8 +526,8 @@ commands:
           name: Cleanup aws config
           command: |
             # cleanup
-            rmdir -r $AWS_SHARED_CREDENTIALS_FILE
-            rmdir -r $AWS_CONFIG_FILE
+            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
+            rmdir -rf $AWS_CONFIG_FILE
   security_changes:
     description: Create IAM roles and Security groups 
     parameters:
@@ -920,6 +928,9 @@ jobs:
       - check_job:
           start_job: false
       - install_aws
+      - configure_aws:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
       - checkout
       - check_master
       - install_ansible
@@ -927,14 +938,6 @@ jobs:
       - run: 
           name: Add back-end ip to inventory
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-
             # Access secrets which can be rotated by the authorized IAM user
             # without the need of manually deleting and adding new env variables in Circleci
             
@@ -956,13 +959,7 @@ jobs:
 
             # cleanup
             unset EC2_USER
-            unset EC2_HOST
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY           
+            unset EC2_HOST        
       - run:
           name: Configure server
           command: |
@@ -972,7 +969,12 @@ jobs:
           root: .
           paths:
             - .circleci/ansible/inventory.ini
-
+      - run:
+          name: Cleanup aws config
+          command: |
+            # cleanup
+            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
+            rmdir -rf $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -988,6 +990,9 @@ jobs:
       - check_job:
           start_job: false
       - install_aws
+      - configure_aws:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
       - checkout
       - check_master   
       # - restore_cache:
@@ -998,14 +1003,6 @@ jobs:
       - run:
           name: Run migrations
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-
             TYPEORM_USERNAME=$(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleDB \
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."username")
@@ -1033,17 +1030,12 @@ jobs:
             npm run migrations
 
             # cleanup
-            unset AWS_ACCESS_KEY_ID
-            unset AWS_USER_SECRET_ACCESS_KEY
             unset TYPEORM_USERNAME
             unset TYPEORM_PASSWORD
             unset TYPEORM_DATABASE
             unset TYPEORM_HOST
             unset TYPEORM_PORT
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY 
+
 #       - run:
 #           name: Send migration results to memstash
 #           command: |
@@ -1053,7 +1045,12 @@ jobs:
       #     paths: 
       #       - backend/node_modules
       #     key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-
+      - run:
+          name: Cleanup aws config
+          command: |
+            # cleanup
+            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
+            rmdir -rf $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -1069,6 +1066,9 @@ jobs:
       - check_job:
           start_job: false
       - install_aws
+      - configure_aws:
+          access_key_id: $AWS_USER_ACCESS_KEY_ID
+          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
       - checkout
       - check_master
       - restore_cache:
@@ -1079,13 +1079,6 @@ jobs:
       - run:
           name: Get backend url and build
           command: |
-            # AWS CLI supported environment variables
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_CLI_ACCESS_KEY_ID")
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_CLI_REGION")
-
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
 
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
@@ -1095,10 +1088,6 @@ jobs:
             cd ./frontend
             npm i
             npm run build
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: $AWS_USER_ACCESS_KEY_ID
-            PARAM_AWS_CLI_REGION: $AWS_DEFAULT_REGION
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: $AWS_USER_SECRET_ACCESS_KEY 
       - run: 
           name: Deploy frontend objects
           command: |+
@@ -1110,6 +1099,12 @@ jobs:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}   
+      - run:
+          name: Cleanup aws config
+          command: |
+            # cleanup
+            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
+            rmdir -rf $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
       - when:
@@ -1126,6 +1121,9 @@ jobs:
       - check_job:
           start_job: false
       - install_aws
+      - configure_aws:
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
       - checkout
       - check_master
       - install_ansible
@@ -1142,7 +1140,13 @@ jobs:
           name: Deploy backend
           command: |
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
-
+      - run:
+          name: Cleanup config
+          command: |
+            # cleanup aws and ansible cfg
+            rmdir -rf $AWS_SHARED_CREDENTIALS_FILE
+            rmdir -rf $AWS_CONFIG_FILE
+            rm -f .circleci/ansible/inventory.ini
       ##Below are options to deal with a failed job 
       # 
       - when:
