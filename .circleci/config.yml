@@ -323,7 +323,7 @@ commands:
             PARAM_AWS_CLI_INSTALL_DIR: <<parameters.install-dir>>
           name: Install AWS CLI v2
   configure_aws:
-    descripttion: >
+    description: >
       configure aws credentials
     parameters:
       access_key_id: 
