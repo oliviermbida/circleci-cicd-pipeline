@@ -39,16 +39,16 @@ parameters:
     default: false
   run_configure_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_migrations:
     type: boolean
-    default: true
+    default: false
   run_deploy_frontend:
     type: boolean
-    default: false
+    default: true
   run_deploy_backend:
     type: boolean
-    default: false
+    default: true
 
 commands:
 # Useful if you don't want to re-run deploy-infrastructure which takes a while.
