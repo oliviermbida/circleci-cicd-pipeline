@@ -567,7 +567,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - checkout
       - check_master
       - restore_cache:
@@ -603,7 +603,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: true
       - checkout
       - check_master
       - restore_cache:
@@ -919,7 +919,7 @@ jobs:
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - install_aws
       - configure_aws:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
@@ -1112,7 +1112,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: false
       - install_aws
       - configure_aws:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
