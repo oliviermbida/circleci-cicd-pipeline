@@ -36,19 +36,19 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_migrations:
     type: boolean
-    default: false
+    default: true
   run_deploy_frontend:
     type: boolean
     default: false
   run_deploy_backend:
     type: boolean
-    default: true
+    default: false
 
 commands:
 # Useful if you don't want to re-run deploy-infrastructure which takes a while.
@@ -1036,29 +1036,55 @@ jobs:
       - run:
           name: Run migrations
           command: |
-            TYPEORM_USERNAME=$(aws ssm get-parameter \
-                --name /aws/reference/secretsmanager/UdaPeopleDB \
-                --with-decryption --output text --query "Parameter.Value" | jq -r ."username")
+            EC2_USER=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleSSH \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
 
-            TYPEORM_PASSWORD=$(aws ssm get-parameter \
-                --name /aws/reference/secretsmanager/UdaPeopleDB \
-                --with-decryption --output text --query "Parameter.Value" | jq -r ."password")
+            EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
 
-            TYPEORM_DATABASE=$(aws ssm get-parameter \
+            export TYPEORM_USERNAME=($(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleDB \
-                --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."username"))
 
-            TYPEORM_PORT=$(aws rds describe-db-instances \
+            export TYPEORM_PASSWORD=($(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."password"))
+
+            export TYPEORM_DATABASE=($(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname"))
+
+            RDS_PORT=$(aws rds describe-db-instances \
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
-            TYPEORM_HOST=$(aws rds describe-db-instances \
+            RDS_HOST=$(aws rds describe-db-instances \
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
+            export TYPEORM_HOST=localhost
+            export TYPEORM_PORT=5532
+            export NODE_ENV=production
+
             cd ./backend 
-            npm cache clean --force
-            rm -rf node_modules
-            rm -f package-lock.json
+            # SSH connection configuration
+            if [ "${HOME}" = "/" ]
+            then
+              export HOME=$(getent passwd $(id -un) | cut -d: -f6)
+            fi
+            printf "%s QbM8rDBaZ9yajNovvO09gv+ks71u1c1y0C4S6Bt39CE" $EC2_HOST >> "$HOME/.ssh/known_hosts"
+            chmod 0600 "$HOME/.ssh/known_hosts"
+            if [ -f "$HOME/.ssh/id_ed25519" ]; then
+              rm -f "$HOME/.ssh/id_ed25519"
+            fi
+
+            #access ssh key from aws secrets
+            aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/udapeople_ssh_key \
+                --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
+            chmod 0700 "$HOME/.ssh/id_ed25519"
+            # ssh tunnel
+            ssh -4 -i $HOME/.ssh/id_ed25519 -o StrictHostKeyChecking=no -f -N -L $TYPEORM_PORT:$RDS_HOST:$RDS_PORT $EC2_USER@$EC2_HOST 
             npm i
             npm run migrations
 
@@ -1066,9 +1092,11 @@ jobs:
             unset TYPEORM_USERNAME
             unset TYPEORM_PASSWORD
             unset TYPEORM_DATABASE
-            unset TYPEORM_HOST
-            unset TYPEORM_PORT
-
+            unset RDS_HOST
+            unset RDS_PORT
+            killall ssh
+            rm -f $HOME/.ssh/id_ed25519
+            rm -f .env
 #       - run:
 #           name: Send migration results to memstash
 #           command: |
@@ -1078,6 +1106,38 @@ jobs:
       #     paths: 
       #       - backend/node_modules
       #     key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+      # - run:
+      #     name: Revert migration
+      #     command: | 
+      #       TYPEORM_USERNAME=$(aws ssm get-parameter \
+      #           --name /aws/reference/secretsmanager/UdaPeopleDB \
+      #           --with-decryption --output text --query "Parameter.Value" | jq -r ."username")
+
+      #       TYPEORM_PASSWORD=$(aws ssm get-parameter \
+      #           --name /aws/reference/secretsmanager/UdaPeopleDB \
+      #           --with-decryption --output text --query "Parameter.Value" | jq -r ."password")
+
+      #       TYPEORM_DATABASE=$(aws ssm get-parameter \
+      #           --name /aws/reference/secretsmanager/UdaPeopleDB \
+      #           --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
+
+      #       TYPEORM_PORT=$(aws rds describe-db-instances \
+      #           --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+      #           --output text --query "DBInstances[*].Endpoint.Port")
+
+      #       TYPEORM_HOST=$(aws rds describe-db-instances \
+      #           --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+      #           --output text --query "DBInstances[*].Endpoint.Address")
+      #       cd ./backend
+      #       npm i
+      #       npm run migrations:revert 
+      #       # cleanup
+      #       unset TYPEORM_USERNAME
+      #       unset TYPEORM_PASSWORD
+      #       unset TYPEORM_DATABASE
+      #       unset TYPEORM_HOST
+      #       unset TYPEORM_PORT
+      #     when: on_fail
       - run:
           name: Cleanup aws config
           command: |
@@ -1086,6 +1146,17 @@ jobs:
             rm -f $AWS_CONFIG_FILE
       ##Below are options to deal with a failed job 
       # 
+      - run: 
+          name: clean up
+          command: |
+            # cleanup
+            unset TYPEORM_USERNAME
+            unset TYPEORM_PASSWORD
+            unset TYPEORM_DATABASE
+            unset RDS_HOST
+            unset RDS_PORT
+            rm -f $HOME/.ssh/id_ed25519
+          when: on_fail
       - when:
           condition: on_fail
           steps:
