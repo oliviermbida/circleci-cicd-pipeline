@@ -4,12 +4,52 @@ orbs:
   slack: circleci/slack@4.10.1
 
 parameters:
-#   run_integration_tests:
-#     type: boolean
-#     default: false
   workflowID:
     type: string
     default: cli803394216630
+#   run_integration_tests:
+#     type: boolean
+#     default: false
+  # run_smoke_test:
+  #   type: boolean
+  #   default: false
+  run_build_frontend:
+    type: boolean
+    default: false
+  run_build_backend:
+    type: boolean
+    default: false
+  run_test_frontend:
+    type: boolean
+    default: false
+  run_test_backend:
+    type: boolean
+    default: false
+  run_scan_frontend:
+    type: boolean
+    default: false
+  run_scan_backend:
+    type: boolean
+    default: false
+  run_scan_sonar:
+    type: boolean
+    default: false
+  run_deploy_infrastructure:
+    type: boolean
+    default: true
+  run_configure_infrastructure:
+    type: boolean
+    default: true
+  run_migrations:
+    type: boolean
+    default: false
+  run_deploy_frontend:
+    type: boolean
+    default: false
+  run_deploy_backend:
+    type: boolean
+    default: true
+
 commands:
 # Useful if you don't want to re-run deploy-infrastructure which takes a while.
   check_job:
@@ -567,7 +607,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: <<pipeline.parameters.run_build_frontend>>
       - checkout
       - check_master
       - restore_cache:
@@ -603,7 +643,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: true
+          start_job: <<pipeline.parameters.run_build_backend>>
       - checkout
       - check_master
       - restore_cache:
@@ -639,7 +679,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_test_frontend>>
       - checkout
       - check_master
       # Restore from cache
@@ -682,7 +722,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_test_backend>>
       - checkout
       - check_master
       # Restore from cache
@@ -725,7 +765,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_scan_frontend>>
       - checkout
       - check_master
       # Restore from cache
@@ -769,7 +809,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_scan_backend>>
       - checkout
       - check_master
       # Restore from cache
@@ -812,7 +852,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_scan_sonar>>
       - checkout
       - check_master
       - scan:
@@ -835,7 +875,7 @@ jobs:
       - image: cimg/python:3.9.13-node
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_deploy_infrastructure>>
       - install_aws
       - checkout
       - check_master
@@ -919,7 +959,7 @@ jobs:
       # python3 3.9.13, ubuntu 20.04.4 LTS, virtualenv 20.14.1, wget 1.20.3, wheel 0.37.1, yarn 1.22.18
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_configure_infrastructure>>
       - install_aws
       - configure_aws:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
@@ -981,7 +1021,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_migrations>>
       - install_aws
       - configure_aws:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
@@ -1057,7 +1097,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_deploy_frontend>>
       - install_aws
       - configure_aws:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
@@ -1112,7 +1152,7 @@ jobs:
     <<: *defaults
     steps:
       - check_job:
-          start_job: false
+          start_job: <<pipeline.parameters.run_deploy_backend>>
       - install_aws
       - configure_aws:
           access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
