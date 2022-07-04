@@ -36,7 +36,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
