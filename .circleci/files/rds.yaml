@@ -24,6 +24,7 @@ Resources:
     Properties:
       DBName: '{{resolve:secretsmanager:UdaPeopleDB:SecretString:dbname}}'
       Engine: postgres
+      EngineVersion: "12.10"
       MasterUsername: '{{resolve:secretsmanager:UdaPeopleDB:SecretString:username}}'
       DBInstanceClass:
         Ref: DBClass
