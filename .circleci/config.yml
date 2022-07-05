@@ -36,7 +36,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
     default: false
@@ -601,7 +601,8 @@ commands:
 # 
 defaults: &defaults
   docker:
-    - image: circleci/node:13.8.0           
+#    - image: circleci/node:13.8.0
+    - image: circleci/node:14.18.1           
 jobs:
   build-frontend:
     <<: *defaults
@@ -1035,6 +1036,7 @@ jobs:
       #       - v1-backend-deps-
       - run:
           name: Run migrations
+          working_directory: ./backend
           command: |
             EC2_USER=$(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleSSH \
@@ -1066,7 +1068,6 @@ jobs:
             export TYPEORM_PORT=5532
             export NODE_ENV=development
 
-            cd ./backend 
             # SSH connection configuration
             if [ "${HOME}" = "/" ]
             then
