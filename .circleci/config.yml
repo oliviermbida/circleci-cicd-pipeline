@@ -1067,6 +1067,18 @@ jobs:
             export TYPEORM_HOST=localhost
             export TYPEORM_PORT=5532
             export NODE_ENV=development
+            
+            printf "NODE_ENV=%s" $NODE_ENV >>.env
+            printf "TYPEORM_HOST=%s" $TYPEORM_HOST >> .env
+            printf "TYPEORM_PORT=%s" $TYPEORM_PORT >> .env
+            printf "TYPEORM_USERNAME=%s" $TYPEORM_USERNAME >> .env
+            printf "TYPEORM_PASSWORD=%s" $TYPEORM_PASSWORD >> .env
+            printf "TYPEORM_DATABASE=%s" $TYPEORM_DATABASE >> .env
+            printf "TYPEORM_CONNECTION=%s" $TYPEORM_CONNECTION >> .env
+            printf "TYPEORM_ENTITIES=%s" $TYPEORM_ENTITIES >> .env
+            printf "TYPEORM_MIGRATIONS=%s" $TYPEORM_MIGRATIONS >> .env
+            printf "TYPEORM_MIGRATIONS_DIR=%s" $TYPEORM_MIGRATIONS_DIR >> .env
+            chmod 600 .env
 
             # SSH connection configuration
             if [ "${HOME}" = "/" ]
@@ -1097,6 +1109,7 @@ jobs:
             unset RDS_PORT
             #killall ssh
             rm -f $HOME/.ssh/id_ed25519
+            rm -f .env
 #       - run:
 #           name: Send migration results to memstash
 #           command: |
@@ -1156,6 +1169,7 @@ jobs:
             unset RDS_HOST
             unset RDS_PORT
             rm -f $HOME/.ssh/id_ed25519
+            rm -f .env
           when: on_fail
       - when:
           condition: on_fail
