@@ -36,7 +36,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -45,7 +45,7 @@ parameters:
     default: false
   run_deploy_frontend:
     type: boolean
-    default: true
+    default: false
   run_deploy_backend:
     type: boolean
     default: true
@@ -1256,7 +1256,34 @@ jobs:
       - run:
           name: Deploy backend
           command: |
+            export TYPEORM_USERNAME=($(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."username"))
+
+            export TYPEORM_PASSWORD=($(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."password"))
+
+            export TYPEORM_DATABASE=($(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleDB \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname"))
+
+            export TYPEORM_PORT=($(aws rds describe-db-instances \
+                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --output text --query "DBInstances[*].Endpoint.Port"))
+
+            export TYPEORM_HOST=($(aws rds describe-db-instances \
+                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --output text --query "DBInstances[*].Endpoint.Address"))
+            export NODE_ENV=development
+            echo $TYPEORM_HOST
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
+
+            unset TYPEORM_USERNAME
+            unset TYPEORM_PASSWORD
+            unset TYPEORM_DATABASE
+            unset TYPEORM_HOST
+            unset TYPEORM_PORT
       - run:
           name: Cleanup config
           command: |

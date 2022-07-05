@@ -8,5 +8,16 @@
     - ansible_python_interpreter: /usr/bin/python3
     - ansible_host_key_checking: false
     - ansible_stdout_callback: yaml
+  # Get the environment variables from CircleCI and add to the EC2 instance
+  # {{ hostvars[web][ENVIRONMENT] }}
+  environment:
+    - ENVIRONMENT: production
+    - TYPEORM_CONNECTION: "{{ lookup('ansible.builtin.env', 'TYPEORM_CONNECTION')}}"  
+    - TYPEORM_HOST: "{{ lookup('ansible.builtin.env', 'TYPEORM_HOST')}}" 
+    - TYPEORM_PORT: "{{ lookup('ansible.builtin.env', 'TYPEORM_PORT')}}" 
+    - TYPEORM_USERNAME: "{{ lookup('ansible.builtin.env', 'TYPEORM_USERNAME')}}" 
+    - TYPEORM_PASSWORD: "{{ lookup('ansible.builtin.env', 'TYPEORM_PASSWORD')}}" 
+    - TYPEORM_DATABASE: "{{ lookup('ansible.builtin.env', 'TYPEORM_DATABASE')}}" 
+    - TYPEORM_ENTITIES: "{{ lookup('ansible.builtin.env', 'TYPEORM_ENTITIES')}}" 
   roles:
     - deploy
