@@ -86,7 +86,25 @@ Resources:
     Properties:
       GroupName: !Sub 'udapeopleSG-${WorkflowID}'
       GroupDescription: Allow access on specific ports
+      VpcId: vpc-075baffa9194e6d87
       SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3030
+          ToPort: 3030
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
