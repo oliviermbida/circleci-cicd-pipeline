@@ -8,12 +8,12 @@
 - name: Copy backend deps
   become: true
   ansible.builtin.copy:
-    src: "{{ items }}"
+    src: "/home/circleci/project/backend/package.json"
     dest: /tmp/
     # owner: "ubuntu"
     # mode: 0600
-    with_fileglob:
-      - “/home/circleci/project/backend/package*”
+    # with_fileglob:
+    #   - “/home/circleci/project/backend/package*”
 - name: Install packages using the npm
   ansible.builtin.npm:
     path: /tmp/ 
@@ -30,8 +30,8 @@
 - name: cleanup
   become: true
   ansible.builtin.file:
-    path: "{{ items }}"
+    path: "/tmp/package.json"
     state: absent
-  with_fileglob:
-    - “/tmp/package*”
+  # with_fileglob:
+  #   - “/tmp/package*”
 
