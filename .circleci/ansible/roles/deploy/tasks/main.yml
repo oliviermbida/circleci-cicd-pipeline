@@ -1,17 +1,37 @@
 ---
 
-- name: Copy backend files
+- name: Copy backend dist
   become: true
   copy:
     src: "/home/circleci/project/backend/dist/"
     dest: /var/www/app/
-- name: Install packages package.json using the npm
+- name: Copy backend deps
+  become: true
+  copy:
+    src: {{ items }}
+    dest: /tmp/
+    # owner: "ubuntu"
+    # mode: 0600
+    with_fileglob:
+      - “/home/circleci/project/backend/package*”
+- name: Install packages using the npm
   npm:
-    path: /var/www/app 
+    path: /tmp/ 
     state: present
+    production: no
+    global: yes
+    ci: yes
 - name: PM2 start app 
   ansible.builtin.shell: |
     pm2 start --name app npm -- start
   args:
     chdir: /var/www/app
     executable: /bin/bash
+- name: cleanup
+  become: true
+  ansible.builtin.file:
+    path: {{ items }}
+    state: absent
+  with_fileglob:
+    - “/tmp/package*”
+

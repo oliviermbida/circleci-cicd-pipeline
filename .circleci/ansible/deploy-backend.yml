@@ -11,7 +11,7 @@
   # Get the environment variables from CircleCI and add to the EC2 instance
   # {{ hostvars[web][ENVIRONMENT] }}
   environment:
-    - ENVIRONMENT: production
+    - NODE_ENV: "{{ lookup('ansible.builtin.env', 'NODE_ENV')}}"
     - TYPEORM_CONNECTION: "{{ lookup('ansible.builtin.env', 'TYPEORM_CONNECTION')}}"  
     - TYPEORM_HOST: "{{ lookup('ansible.builtin.env', 'TYPEORM_HOST')}}" 
     - TYPEORM_PORT: "{{ lookup('ansible.builtin.env', 'TYPEORM_PORT')}}" 
@@ -19,5 +19,7 @@
     - TYPEORM_PASSWORD: "{{ lookup('ansible.builtin.env', 'TYPEORM_PASSWORD')}}" 
     - TYPEORM_DATABASE: "{{ lookup('ansible.builtin.env', 'TYPEORM_DATABASE')}}" 
     - TYPEORM_ENTITIES: "{{ lookup('ansible.builtin.env', 'TYPEORM_ENTITIES')}}" 
+    - TYPEORM_MIGRATIONS: "{{ lookup('ansible.builtin.env', 'TYPEORM_MIGRATIONS')}}"
+    - TYPEORM_MIGRATIONS_DIR: "{{ lookup('ansible.builtin.env', 'TYPEORM_MIGRATIONS_DIR')}}"
   roles:
     - deploy
