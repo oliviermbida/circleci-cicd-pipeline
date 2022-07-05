@@ -1067,7 +1067,7 @@ jobs:
             # export TYPEORM_HOST=localhost
             # export TYPEORM_PORT=5532
             export NODE_ENV=development
-
+            echo $TYPEORM_HOST
             printf "NODE_ENV=%s" $NODE_ENV >>.env
             printf "TYPEORM_HOST=%s" $TYPEORM_HOST >> .env
             printf "TYPEORM_PORT=%s" $TYPEORM_PORT >> .env
