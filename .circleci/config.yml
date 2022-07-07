@@ -1252,6 +1252,7 @@ jobs:
             npm run build
       - run:
           name: Deploy backend
+          no_output_timeout: 30m
           command: |
             export TYPEORM_USERNAME=($(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleDB \
