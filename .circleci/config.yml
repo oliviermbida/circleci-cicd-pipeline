@@ -45,7 +45,7 @@ parameters:
     default: false
   run_deploy_frontend:
     type: boolean
-    default: true
+    default: false
   run_deploy_backend:
     type: boolean
     default: true
