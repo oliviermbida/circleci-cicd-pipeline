@@ -39,16 +39,16 @@ parameters:
     default: true
   run_configure_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_migrations:
     type: boolean
     default: false
   run_deploy_frontend:
     type: boolean
-    default: false
+    default: true
   run_deploy_backend:
     type: boolean
-    default: false
+    default: true
 
 commands:
 # Useful if you don't want to re-run deploy-infrastructure which takes a while.
@@ -617,8 +617,8 @@ jobs:
             - v1-frontend-deps-
       - run:
           name: Build front-end
+          working_directory: ./frontend
           command: |
-            cd ./frontend
             npm i
             npm run build
       - save_cache:
@@ -653,8 +653,8 @@ jobs:
             - v1-backend-deps-
       - run:
           name: Back-end build
+          working_directory: ./backend
           command: |
-            cd ./backend
             npm i
             npm run build
       - save_cache:
@@ -690,8 +690,8 @@ jobs:
             - v1-frontend-deps-
       - run:
           name: Test front-end
+          working_directory: ./frontend
           command: |
-            cd ./frontend 
             npm i
             npm test 
       - save_cache:
@@ -733,8 +733,8 @@ jobs:
             - v1-backend-deps-
       - run:
           name: Test front-end
+          working_directory: ./backend
           command: |
-            cd ./backend 
             npm i
             npm test 
       - save_cache:
@@ -776,8 +776,8 @@ jobs:
             - v1-frontend-deps-
       - run:
           name: Scan front-end
+          working_directory: ./frontend
           command: |
-            cd ./frontend 
             npm install 
             #npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
@@ -820,8 +820,8 @@ jobs:
             - v1-backend-deps-
       - run:
           name: Scan front-end
+          working_directory: ./backend
           command: |
-            cd ./backend 
             npm install
             #npm audit --audit-level=critical 
             npm audit fix --audit-level=critical --force
@@ -1195,14 +1195,11 @@ jobs:
             - v1-frontend-deps-
       - run:
           name: Get backend url and build
+          working_directory: ./frontend
           command: |
-
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
-            #
             export API_URL="http://${EC2_HOST}:3030"
-            #echo "${API_URL}" 
-            cd ./frontend
             npm i
             npm run build
       - run: 
@@ -1249,8 +1246,8 @@ jobs:
           at: .
       - run: 
           name: build backend
+          working_directory: ./backend
           command: |
-            cd ./backend
             npm i
             npm run build
       - run:

@@ -3,10 +3,16 @@
 - name: Update packages
   ansible.builtin.apt:
     update_cache: yes
-- name: install the NodeSource PPA
-  ansible.builtin.shell: 'curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -'
+# - name: install the NodeSource PPA
+#   ansible.builtin.shell: 'curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -'
+#   args:
+#     warn: no
+- name: install node 13.8.0
+  ansible.builtin.shell: |
+    npm install -g n
+    n 13.8.0
   args:
-    warn: no
+    executable: /bin/bash
 - name: Install required packages
   ansible.builtin.apt: name={{ item }} state=present
   with_items:
@@ -14,7 +20,7 @@
     - curl
     - wget
     - nginx
-    - nodejs
+    # - nodejs
     - build-essential
 - name: install PM2
   ansible.builtin.shell: |
