@@ -2,9 +2,9 @@
 
 - name: Copy backend files
   become: true
-  ansible.builtin.copy:
-    src: "/home/circleci/project/backend/"
-    dest: /var/www/app/
+  ansible.builtin.unarchive:
+    src: "/home/circleci/project/backend.tar.gz"
+    dest: /var/www/
 # - name: Copy backend deps
 #   become: true
 #   ansible.builtin.copy:
@@ -21,17 +21,17 @@
 #     production: no
 #     global: yes
 #     ci: yes
-- name: install deps 
-  ansible.builtin.shell: |
-    sudo npm i
-  args:
-    chdir: /var/www/app
-    executable: /bin/bash
+# - name: install deps 
+#   ansible.builtin.shell: |
+#     sudo npm i
+#   args:
+#     chdir: /var/www/backend
+#     executable: /bin/bash
 - name: PM2 start app 
   ansible.builtin.shell: |
     pm2 start --name udapeople npm -- start
   args:
-    chdir: /var/www/app/dist
+    chdir: /var/www/backend/dist
     executable: /bin/bash
 # - name: cleanup
 #   become: true
