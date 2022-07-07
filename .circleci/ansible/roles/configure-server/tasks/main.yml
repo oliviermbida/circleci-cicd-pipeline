@@ -16,7 +16,6 @@
     - nginx
     - nodejs
     - build-essential
-    - npm
 - name: install PM2
   ansible.builtin.shell: |
     npm install pm2@latest -g
