@@ -5,6 +5,7 @@
   ansible.builtin.copy:
     src: "/home/circleci/project/backend/"
     dest: /var/www/app/
+    no_output_timeout: 30m
 # - name: Copy backend deps
 #   become: true
 #   ansible.builtin.copy:
@@ -29,7 +30,7 @@
     executable: /bin/bash
 - name: PM2 start app 
   ansible.builtin.shell: |
-    pm2 start --name app npm -- start
+    pm2 start --name udapeople npm -- start
   args:
     chdir: /var/www/app/dist
     executable: /bin/bash
