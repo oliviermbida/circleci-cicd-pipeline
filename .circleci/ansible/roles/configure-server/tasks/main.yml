@@ -9,6 +9,7 @@
 #     warn: no
 - name: install node 13.8.0
   ansible.builtin.shell: |
+    sudo apt install -y nodejs npm
     npm install -g n
     n 13.8.0
   args:
