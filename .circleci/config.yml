@@ -1258,8 +1258,7 @@ jobs:
             export TYPEORM_HOST=($(aws rds describe-db-instances \
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address"))
-            export NODE_ENV=testing
-            echo $TYPEORM_HOST
+            export NODE_ENV=test
             ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
 
             unset TYPEORM_USERNAME
