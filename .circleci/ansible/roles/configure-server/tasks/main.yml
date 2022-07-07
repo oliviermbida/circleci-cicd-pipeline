@@ -24,14 +24,14 @@
     pm2 save
   args:
     executable: /bin/bash
-- name: start PM2 service unit
-  ansible.builtin.systemd:
-    state: started
-    name: pm2-ubuntu
-    enabled: yes
+# - name: start PM2 service unit
+#   ansible.builtin.systemd:
+#     state: started
+#     name: pm2-ubuntu
+#     enabled: yes
 - name: install node 13.8.0
   ansible.builtin.shell: |
-    npm install -g n
-    n 13.8.0
+    sudo npm install -g n
+    sudo n 13.8.0
   args:
     executable: /bin/bash
