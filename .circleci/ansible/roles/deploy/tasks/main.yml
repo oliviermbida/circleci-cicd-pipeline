@@ -5,11 +5,11 @@
   ansible.builtin.copy:
     src: "/home/circleci/project/backend/dist/"
     dest: /var/www/app/
-# - name: Copy backend deps
-#   become: true
-#   ansible.builtin.copy:
-#     src: "/home/circleci/project/backend/package.json"
-#     dest: /tmp/
+- name: Copy backend deps
+  become: true
+  ansible.builtin.copy:
+    src: "/home/circleci/project/backend/package.json"
+    dest: /var/www/app/
     # owner: "ubuntu"
     # mode: 0600
     # with_fileglob:
