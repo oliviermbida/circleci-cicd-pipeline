@@ -773,7 +773,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD frontend npm audit fix"
-          condition: <<pipeline.parameters.commit>>
+          # condition: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - frontend/node_modules
@@ -814,7 +814,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD backend npm audit fix"
-          condition: <<pipeline.parameters.commit>>
+          # condition: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - backend/node_modules
