@@ -13,6 +13,9 @@ parameters:
   # run_smoke_test:
   #   type: boolean
   #   default: false
+  commit:
+    type: boolean
+    default: false
   run_build_frontend:
     type: boolean
     default: false
@@ -36,16 +39,16 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
   run_migrations:
     type: boolean
-    default: false
+    default: true
   run_deploy_frontend:
     type: boolean
-    default: false
+    default: true
   run_deploy_backend:
     type: boolean
     default: true
@@ -147,6 +150,7 @@ commands:
       commit_message:
         type: string
         default: "NO_BUILD Auto commit from CircleCI [skip ci]"
+
     steps: 
       # - checkout
       # For a self-hosted runner, ensure that you have an ssh-agent on your system 
@@ -1092,11 +1096,10 @@ jobs:
             rm -f $HOME/.ssh/id_ed25519
       - run: 
           name: Upload migration results
-          command: |+
-            aws s3 sync \
-              ./backend/migrations.txt s3://$CFN_BUCKET/reports/ --delete \
-              --acl public-read \
-              --cache-control "max-age=86400"  
+          working_directory: ./backend
+          command: |
+            aws s3 cp \
+              ./migrations.txt s3://$CFN_BUCKET/migrations.txt 
       # - save_cache:
       #     paths: 
       #       - backend/node_modules
