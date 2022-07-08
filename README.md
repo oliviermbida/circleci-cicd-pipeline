@@ -196,6 +196,7 @@ You can get the fingerprint of the EC2_HOST at creation by monitoring the EC2 co
         aws --output text ec2 get-console-output --instance-id $EC2_HOST_ID >> output.txt
 
 where :
+
         EC2_HOST_ID=$(aws --output text --query 'Reservations[*].Instances[*].InstanceId' \
         ec2 describe-instances --filters Name='tag:Name',Values='my_ec2') 
 
@@ -220,9 +221,12 @@ After creating the tunnel you can test the connection to your_postgres_database 
 
         psql -hlocalhost -Uyour_postgres_username -p5532 -d your_postgres_database
 
-And finally getting back to the pipeline,for the backend configuration you will therefore set TYPEORM_HOST=localhost and TYPEORM_PORT=5532. This will just connect as if it was localhost and perform your migrations.
+And finally getting back to the pipeline,for the backend configuration you will therefore set TYPEORM_HOST=localhost and TYPEORM_PORT=5532. This will just connect as if it was localhost and perform your migrations or revert migrations.
 
-![Screenshot pm2](/docs/screenshots/MIGRATIONS01.png)
+In this screenshot there are 3 tests done. Before migrations, after migrations and revert migrations.
+As you can see there are no tables before migrations and after revert migrations phase.
+
+![Screenshot pm2](/docs/screenshots/MIGRATIONS02.png)
 
 [Migrations report](/docs/reports/migrations.txt)
 
@@ -269,3 +273,4 @@ So more to do to clean it up using other security tools in the workflow.
 
 ![Github security alerts backend fix](/docs/screenshots/security_github_backend_fix.png)
 
+Please note that commiting these audit fixes will have a major impact on the App. For example if developers have injected some dependencies which have been found to be a security vulnerability and these audit fixes removed them then you will find that builds start to fail.
