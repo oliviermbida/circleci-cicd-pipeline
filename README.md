@@ -155,7 +155,76 @@ You can ssh to the host and check the configuration. In this case configure-serv
 Once tested they be added to the configuration stage in the pipeline as seen in this [screenshot](/docs/screenshots/SCREENSHOT06_config.png)
 
 
+# Migrations
 
+I will use the same approach i.e start by checking that everything is working locally before adding to the pipeline.
+
+The migration strategy I will use will be to create a tunnel using the backend as a bastion to get to the postgres database which in most cases for security will not be in public subnet and therefore will not have public access.
+
+        ssh -4 -i your_ec2_key_pair -f -N -L 5532:$RDS_HOST:5432 $EC2_USER@$EC2_HOST
+
+If you tag your EC2 instance with Name=my_ec2, you can filter as such:
+
+        EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='my_ec2')
+
+And the RDS postgres with identifier my_db:
+
+        RDS_HOST=$(aws rds describe-db-instances \
+            --db-instance-identifier my_db \
+            --output text --query "DBInstances[*].Endpoint.Address")
+
+This will retrieve a DNS name that resolves to a private IP address or to a public IP address if you set it as Publicly Accessible.
+
+The -4 in the command is to force IPv4 protocol because the AWS RDS connection defaults to IPv6 for some reason.
+
+Hang on I hear you say why copy your_ec2_key_pair into a Circleci pipeline, not really secure.
+You can store it as a secret in AWS secrets manager and do this:
+
+        aws ssm get-parameter \
+            --name /aws/reference/secretsmanager/your_ec2_key_pair \
+            --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
+
+        chmod 0700 "$HOME/.ssh/id_ed25519"
+
+When you run the ssh command it automatically authenticates with those details but don't forget to cleanup the id_ed25519 file when done or id_rsa if your key is such.
+
+One last issue setting up this tunnel is the known hosts. You will have to add the fingerprint of the EC2_HOST in $HOME/.ssh/known_hosts.
+
+You can get the fingerprint of the EC2_HOST at creation by monitoring the EC2 console output:
+
+        aws --output text ec2 get-console-output --instance-id $EC2_HOST_ID >> output.txt
+
+where :
+        EC2_HOST_ID=$(aws --output text --query 'Reservations[*].Instances[*].InstanceId' \
+        ec2 describe-instances --filters Name='tag:Name',Values='my_ec2') 
+
+You could probably filter the output with:
+
+        sed -n '/-----BEGIN SSH HOST KEY FINGERPRINTS-----/,/-----END SSH HOST KEY FINGERPRINTS-----/p' output.txt >> EC2_HOST_FINGERPRINT
+
+If you've already tested the connection and know EC2_HOST fingerprint then you may run this ssh command instead:
+
+        ssh -4 -i $HOME/.ssh/id_ed25519 -o StrictHostKeyChecking=no -f -N -L 5532:$RDS_HOST:$RDS_PORT $EC2_USER@$EC2_HOST 
+
+This will automatically add the EC2_HOST to the $HOME/.ssh/known_hosts without a prompt.
+
+When you run the command above (SSH tunneling), you configure the following settings:
+
+    - Local connections to LOCALHOST: 5532 forwarded to remote address RDS_HOST:5432
+    - Local forwarding listening on 127.0.0.1 port 5532.
+    - channel 0: new [port listener]
+    - Local forwarding listening on ::1 port 5532.
+
+After creating the tunnel you can test the connection to your_postgres_database with your_postgres_username:
+
+        psql -hlocalhost -Uyour_postgres_username -p5532 -d your_postgres_database
+
+And finally getting back to the pipeline,for the backend configuration you will therefore set TYPEORM_HOST=localhost and TYPEORM_PORT=5532. This will just connect as if it was localhost and perform your migrations.
+
+![Screenshot pm2](/docs/screenshots/MIGRATIONS01.png)
+
+[Migrations report](/docs/reports/migrations.txt)
 
 # Troubleshooting by skipping jobs
 
