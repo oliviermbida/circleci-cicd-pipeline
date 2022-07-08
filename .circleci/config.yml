@@ -629,19 +629,14 @@ jobs:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
       ##You can revert/reset to the previous commit using its commit_sha
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
 
   build-backend:
     <<: *defaults
@@ -665,19 +660,14 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
       ##You can revert/reset to the previous commit using its commit_sha
       #       - revert-commit:
       #           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
 
   test-frontend:
     <<: *defaults
@@ -705,21 +695,17 @@ jobs:
       - slack/notify:
           event: pass
           template: basic_success_1
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-      #      - run:
-      #         name: Notify failed Tests
-      #         command: curl --data fail_tests.log http://example.com/error_logs
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      ##You can revert/reset to the previous commit using its commit_sha
-      #       - revert-commit:
-      #           commit_sha: <<pipeline.parameters.commit_sha>>  
+
+#      - run:
+#         name: Notify failed Tests
+#         command: curl --data fail_tests.log http://example.com/error_logs
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+##You can revert/reset to the previous commit using its commit_sha
+#       - revert-commit:
+#           commit_sha: <<pipeline.parameters.commit_sha>>  
       #
            
   test-backend:
@@ -745,25 +731,20 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
+      # - slack/notify:
+      #     event: pass
+      #     template: basic_success_1
+#      - run:
+#         name: Notify failed Tests
+#         command: curl --data fail_tests.log http://example.com/error_logs
       - slack/notify:
-          event: pass
-          template: basic_success_1
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-      #      - run:
-      #         name: Notify failed Tests
-      #         command: curl --data fail_tests.log http://example.com/error_logs
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      ##You can revert/reset to the previous commit using its commit_sha
-      #       - revert-commit:
-      #           commit_sha: <<pipeline.parameters.commit_sha>>  
-      #
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+##You can revert/reset to the previous commit using its commit_sha
+#       - revert-commit:
+#           commit_sha: <<pipeline.parameters.commit_sha>>  
+#
       
   scan-frontend:
     <<: *defaults
@@ -793,22 +774,18 @@ jobs:
           paths: 
             - frontend/node_modules
           key: v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }} 
+      # - slack/notify:
+      #     event: pass
+      #     template: basic_success_1
+
       - slack/notify:
-          event: pass
-          template: basic_success_1
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      ##You can revert/reset to the previous commit using its commit_sha
-      #       - revert-commit:
-      #           commit_sha: <<pipeline.parameters.commit_sha>>  
-      #
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+##You can revert/reset to the previous commit using its commit_sha
+#       - revert-commit:
+#           commit_sha: <<pipeline.parameters.commit_sha>>  
+#
 
   scan-backend:
     <<: *defaults
@@ -838,22 +815,18 @@ jobs:
           paths: 
             - backend/node_modules
           key: v1-backend-deps-{{ checksum "./backend/package-lock.json" }} 
+      # - slack/notify:
+      #     event: pass
+      #     template: basic_success_1
+
       - slack/notify:
-          event: pass
-          template: basic_success_1
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      ##You can revert/reset to the previous commit using its commit_sha
-      #       - revert-commit:
-      #           commit_sha: <<pipeline.parameters.commit_sha>>  
-      #
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+##You can revert/reset to the previous commit using its commit_sha
+#       - revert-commit:
+#           commit_sha: <<pipeline.parameters.commit_sha>>  
+#
   scan-sonar:
     <<: *defaults
     steps:
@@ -863,19 +836,15 @@ jobs:
       - check_master
       - scan:
           project_root: .
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      ##You can revert/reset to the previous commit using its commit_sha
-      #       - revert-commit:
-      #           commit_sha: <<pipeline.parameters.commit_sha>>  
-      #
+
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+##You can revert/reset to the previous commit using its commit_sha
+#       - revert-commit:
+#           commit_sha: <<pipeline.parameters.commit_sha>>  
+#
   deploy-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
