@@ -5,39 +5,12 @@
   ansible.builtin.unarchive:
     src: "/home/circleci/project/backend.tar.gz"
     dest: /var/www/
-# - name: Copy backend deps
-#   become: true
-#   ansible.builtin.copy:
-#     src: "/home/circleci/project/backend/package.json"
-#     dest: /var/www/app/
-    # owner: "ubuntu"
-    # mode: 0600
-    # with_fileglob:
-    #   - “/home/circleci/project/backend/package*”
-# - name: Install packages using the npm
-#   ansible.builtin.npm:
-#     path: /tmp/ 
-#     state: present
-#     production: no
-#     global: yes
-#     ci: yes
-# - name: install deps 
-#   ansible.builtin.shell: |
-#     sudo npm i
-#   args:
-#     chdir: /var/www/backend
-#     executable: /bin/bash
+
 - name: PM2 start app 
   ansible.builtin.shell: |
     pm2 start --name udapeople npm -- start
   args:
     chdir: /var/www/backend/dist
     executable: /bin/bash
-# - name: cleanup
-#   become: true
-#   ansible.builtin.file:
-#     path: "/tmp/package.json"
-#     state: absent
-  # with_fileglob:
-  #   - “/tmp/package*”
+
 

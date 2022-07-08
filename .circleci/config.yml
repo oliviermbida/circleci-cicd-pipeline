@@ -50,6 +50,10 @@ parameters:
     type: boolean
     default: true
 
+# ansible config
+  ans_inventory_file:
+    type: string
+    default: .circleci/ansible/inventory.ini
 commands:
 # Useful if you don't want to re-run deploy-infrastructure which takes a while.
   check_job:
@@ -784,6 +788,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD frontend npm audit fix"
+          condition: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - frontend/node_modules
@@ -828,6 +833,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD backend npm audit fix"
+          condition: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - backend/node_modules
@@ -1182,6 +1188,7 @@ jobs:
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
             export API_URL="http://${EC2_HOST}:3030"
+            npm cache clean --force
             npm i
             npm run build
       - run: 
@@ -1201,15 +1208,10 @@ jobs:
             # cleanup
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
            
   deploy-backend:
     <<: *defaults
@@ -1230,8 +1232,10 @@ jobs:
           name: build backend
           working_directory: ./backend
           command: |
+            npm cache clean --force
             npm i
             npm run build
+# to avoid slow ansible.builtin.copy, use ansible.builtin.unarchive 
       - run: 
           name: backup files
           command: tar -czvf backend.tar.gz ./backend
@@ -1259,8 +1263,27 @@ jobs:
                 --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             export NODE_ENV=test
-            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml
+            # check other environment variables
+            if [ -z "${TYPEORM_CONNECTION:-}" ]; then
+                echo "In order to use the Deploy backend job a TYPEORM_CONNECTION environment variable must be present."
+                exit 1
+            fi
+            if [ -z "${TYPEORM_ENTITIES:-}" ]; then
+                echo "In order to use the Deploy backend job a TYPEORM_ENTITIES environment variable must be present."
+                exit 1
+            fi
+            if [ -z "${TYPEORM_MIGRATIONS:-}" ]; then
+                echo "In order to use the Deploy backend job a TYPEORM_MIGRATIONS environment variable must be present."
+                exit 1
+            fi
+            if [ -z "${TYPEORM_MIGRATIONS_DIR:-}" ]; then
+                echo "In order to use the Deploy backend job a TYPEORM_MIGRATIONS_DIR environment variable must be present."
+                exit 1
+            fi
 
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/deploy-backend.yml
+
+            #cleanup
             unset TYPEORM_USERNAME
             unset TYPEORM_PASSWORD
             unset TYPEORM_DATABASE
@@ -1272,16 +1295,18 @@ jobs:
             # cleanup aws and ansible cfg
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-            rm -f .circleci/ansible/inventory.ini
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
+            rm -f <<pipeline.parameters.ans_inventory_file>>
+      - run:
+          name: rollback backend
+          command: |
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/rollback-backend.yml
+            # cleanup
+            rm -f <<pipeline.parameters.ans_inventory_file>>
+          when: on_fail
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
 
 #   smoke-test:
 #     docker:
@@ -1422,7 +1447,7 @@ workflows:
             - aws-context
       - deploy-backend:
           requires: 
-          - run-migrations
+            - run-migrations
           context:
             - org-global
             - aws-context

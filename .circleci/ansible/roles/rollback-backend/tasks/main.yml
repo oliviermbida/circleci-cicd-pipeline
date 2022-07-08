@@ -1,0 +1,16 @@
+---
+
+- name: cleanup backend files
+  become: true
+  ansible.builtin.shell: |
+    if [ -f "/var/www/backend" ]; then
+    sudo rm -rf /var/www/backend
+    fi
+  args:
+    executable: /bin/bash
+
+- name: PM2 delete app 
+  ansible.builtin.shell: |
+    pm2 delete udapeople
+  args:
+    executable: /bin/bash
