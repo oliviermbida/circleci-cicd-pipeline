@@ -223,12 +223,69 @@ After creating the tunnel you can test the connection to your_postgres_database 
 
 And finally getting back to the pipeline,for the backend configuration you will therefore set TYPEORM_HOST=localhost and TYPEORM_PORT=5532. This will just connect as if it was localhost and perform your migrations or revert migrations.
 
+# Migration tests
+
 In this screenshot there are 3 tests done. Before migrations, after migrations and revert migrations.
 As you can see there are no tables before migrations and after revert migrations phase.
 
 ![Screenshot pm2](/docs/screenshots/MIGRATIONS02.png)
 
 [Migrations report](/docs/reports/migrations.txt)
+
+To implement this in the pipeline I will define my own test function.
+
+1. I need to know what is it I will be testing:
+
+        ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> MIGRATIONS_TESTS
+
+The output of this command is simply this:
+
+        Migration AddOrders1549375960026 has been executed successfully.
+        Migration FixProductIdTable1549398619849 has been executed successfully.
+        Migration AddEmployee1555722583168 has been executed successfully.
+
+I hear you say, all that just for this output? This is because these are the only migrations present in the TYPEORM_MIGRATIONS_DIR. If there were 100 migrations the output of the command will return them.
+Yes, the above command looks for migration files in the TYPEORM_MIGRATIONS_DIR and format it in the form present in the migrations report output of  'npm run migrations'.
+
+2. It is easy to count those above but if there are many:
+
+        NUMBER_OF_TESTS=$(grep -c ^ MIGRATIONS_TESTS)
+
+3. Now I can define my test function:
+
+        GREEN='\033[0;32m'       
+        RED='\033[0;31m'        
+        NC='\033[0m' 
+        test_migrations () {
+            if grep -Fxq "$1" $2
+            then
+                printf "TEST: ${GREEN}PASSED${NC}\n"
+            else
+                printf "TEST: ${RED}FAILED${NC}\n"
+                # trigger revert migrations
+                exit 1
+            fi            
+        }
+
+4. I can now go through every expected expression in the migrations report:
+
+        TEST_PASSED=$(sed -n 1p /tmp/MIGRATIONS_TESTS)
+
+In the output above this will retrieve the first:
+
+        Migration AddOrders1549375960026 has been executed successfully.
+
+And so on sed -n 2p...3p
+
+5. With our expected expression I can now parse the migration report and assert if found:
+
+        test_migrations "$TEST_PASSED" $MIGRATIONS_REPORT
+
+A failed test will exit 1 and since the Revert Migrations step is on condition on_fail in the Circleci pipeline this will be triggered.
+
+Obviously this is one way of testing if migrations were performed by parsing the migrations report but you can also go direct and query the database either manually as shown in the screenshot if it is a small migration or with queries to the database to see if they exist.
+
+Note: The command above assumes that TYPEORM_MIGRATIONS_DIR contains migrations which are not present in the postgres database. To remove this assumption a parse of other expected expressions of existing migrations is necessary.
 
 # Troubleshooting by skipping jobs
 
