@@ -256,15 +256,22 @@ Yes, the above command looks for migration files in the TYPEORM_MIGRATIONS_DIR a
         GREEN='\033[0;32m'       
         RED='\033[0;31m'        
         NC='\033[0m' 
+
         test_migrations () {
-            if grep -Fxq "$1" $2
-            then
-                printf "TEST: ${GREEN}PASSED${NC}\n"
-            else
-                printf "TEST: ${RED}FAILED${NC}\n"
-                # trigger revert migrations
-                exit 1
-            fi            
+
+        PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
+
+        case $PARSE_RESULT in
+        0)
+        printf "TEST: ${GREEN}PASSED${NC}\n"
+        ;;
+        *)
+        printf "TEST: ${RED}FAILED${NC}\n"
+        # trigger revert migrations
+        exit 1
+        ;;           
+        esac
+
         }
 
 4. I can now go through every expected expression in the migrations report:
@@ -276,6 +283,17 @@ In the output above this will retrieve the first:
         Migration AddOrders1549375960026 has been executed successfully.
 
 And so on sed -n 2p...3p
+
+        n=$(seq $NUMBER_OF_TESTS)
+        for i in $n
+        do
+        # define expected expression in migrations report
+        # e.g "Migration AddOrders1549375960026 has been executed successfully"
+        TEST_PASSED=$(sed -n "$i"p $MIGRATIONS_TESTS)
+        echo $TEST_PASSED
+        # parse migration report and assert expected expression
+        test_migrations "$TEST_PASSED" $MIGRATIONS_REPORT
+        done
 
 5. With our expected expression I can now parse the migration report and assert if found:
 
