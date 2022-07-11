@@ -504,7 +504,7 @@ commands:
         type: string
       use_cloudfront: 
         description: Create cloudfront
-        type: boolean
+        type: string
       resourceID: 
         description: Unique resource identifier
         type: string
@@ -620,7 +620,7 @@ commands:
         type: string
       use_cloudfront: 
         description: Create cloudfront
-        type: boolean
+        type: string
       resourceID: 
         description: Unique resource identifier
         type: string
