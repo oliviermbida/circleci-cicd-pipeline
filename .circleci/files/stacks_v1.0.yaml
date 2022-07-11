@@ -17,6 +17,8 @@ Resources:
   compliance:
     Type: AWS::CloudFormation::Stack
     Properties:
+      Parameters:
+        resourceID: !Ref resourceID
       TemplateURL: security.yaml
       Tags:
         - Key: Name
@@ -26,6 +28,8 @@ Resources:
     DependsOn: 
       - compliance
     Properties:
+      Parameters:
+        resourceID: !Ref resourceID
       TemplateURL: rds.yaml
       Tags:
         - Key: Name
