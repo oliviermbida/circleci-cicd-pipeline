@@ -10,13 +10,13 @@ parameters:
     default: cli803394216630
   environment:
     type: string
-    default: cfn-green
+    default: cfn-Blue
 #   run_integration_tests:
 #     type: boolean
 #     default: false
-  # run_smoke_test:
-  #   type: boolean
-  #   default: false
+  run_smoke_test:
+    type: boolean
+    default: true
   commit:
     type: boolean
     default: false
@@ -62,7 +62,7 @@ parameters:
 # Cloudfront
   use_cloudfront: 
     type: boolean
-    default: false
+    default: true
   cloudfront_distribution_id:
     type: string
     default: ""
@@ -1395,7 +1395,7 @@ jobs:
             # cleanup aws and ansible cfg
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-            rm -f <<pipeline.parameters.ans_inventory_file>>
+            #rm -f <<pipeline.parameters.ans_inventory_file>>
       - run:
           name: rollback backend
           command: |
@@ -1424,12 +1424,32 @@ jobs:
           command: |
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>')
-            curl http://$EC2_HOST:3030/api/status | grep "ok" > BACKEND_SMOKE_TEST
+            curl http://$EC2_HOST:3030/api/status | grep "ok" > /tmp/BACKEND_SMOKE_TEST
+            echo "Backend smoke test"
+            GREEN='\033[0;32m'       
+            RED='\033[0;31m'        
+            NC='\033[0m' 
+            TEST_PASSED=$(cat /tmp/BACKEND_SMOKE_TEST)
+            if [[ $TEST_PASSED == "ok" ]]; then
+              printf "TEST: ${GREEN}PASSED${NC}\n"
+            else
+              printf "TEST: ${RED}FAILED${NC}\n"
+            fi
       - run:
           name: Frontend smoke test.
           command: |
             URL=http://udapeoples3-<<pipeline.parameters.resourceID>>..s3-website-us-east-1.amazonaws.com/build-${CIRCLE_WORKFLOW_ID:0:7}/#/employees
-            curl -S $URL | grep "Welcome"
+            curl -S $URL | grep "Welcome" > /tmp/FRONTEND_SMOKE_TEST
+            echo "Frontend smoke test"
+            GREEN='\033[0;32m'       
+            RED='\033[0;31m'        
+            NC='\033[0m' 
+            TEST_PASSED=$(cat /tmp/FRONTEND_SMOKE_TEST)
+            if [[ $TEST_PASSED == "Welcome" ]]; then
+              printf "TEST: ${GREEN}PASSED${NC}\n"
+            else
+              printf "TEST: ${RED}FAILED${NC}\n"
+            fi
       - run:
           name: Cleanup config
           command: |
