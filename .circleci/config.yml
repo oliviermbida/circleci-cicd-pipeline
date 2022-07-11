@@ -953,16 +953,16 @@ jobs:
           version: "1.3"
       - when: 
           condition: use_cloudfront
-            steps: 
-              - create_changes:
-                  # access_key_id: $AWS_USER_ACCESS_KEY_ID
-                  # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
-                  # region: $AWS_DEFAULT_REGION
-                  resourceID: <<pipeline.parameters.resourceID>>
-                  # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
-                  stackname: <<pipeline.parameters.environment>>
-                  changename: deploy-frontend
-                  version: "1.4"
+          steps: 
+            - create_changes:
+                # access_key_id: $AWS_USER_ACCESS_KEY_ID
+                # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+                # region: $AWS_DEFAULT_REGION
+                resourceID: <<pipeline.parameters.resourceID>>
+                # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+                stackname: <<pipeline.parameters.environment>>
+                changename: deploy-frontend
+                version: "1.4"
 
 # ----------------------------------------------------------
 # create_changes command exits on failure notify concern individuals here.
