@@ -8,5 +8,7 @@
     - ansible_python_interpreter: /usr/bin/python3
     - ansible_host_key_checking: false
     - ansible_stdout_callback: yaml
+  environment:
+    - LATEST_BUILD_IDENTIFIER: "{{ lookup('ansible.builtin.env', 'LATEST_BUILD_IDENTIFIER')}}"
   roles:
     - rollback-backend

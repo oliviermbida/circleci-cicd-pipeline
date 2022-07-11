@@ -1,11 +1,10 @@
 Description: >
-  UdaPeople Security Stack. Must be run by an admin IAM user.
+  Resources Security Stack. Must be run by an admin IAM user.
 
 Parameters:
-  WorkflowID:
+  resourceID:
     Description: Unique identifier.
     Type: String
-    Default: cli803394216630
 
 Resources: 
 # SSM Parameters
@@ -19,14 +18,14 @@ Resources:
   # WebsiteBucketPolicy:
   #   Type: AWS::S3::BucketPolicy
   #   Properties:
-  #     Bucket: !Sub "udapeoples3-${WorkflowID}"
+  #     Bucket: !Sub "udapeoples3-${resourceID}"
   #     PolicyDocument:
   #       Statement:
   #       - Sid: PublicReadForGetBucketObjects
   #         Effect: Allow
   #         Principal: '*'
   #         Action: s3:GetObject
-  #         Resource: !Sub 'arn:aws:s3::${AWS::Account}:udapeoples3-${WorkflowID}'
+  #         Resource: !Sub 'arn:aws:s3::${AWS::Account}:udapeoples3-${resourceID}'
 # EC2 Service Role
   EC2ServiceRole:
     Type: AWS::IAM::Role
@@ -51,7 +50,7 @@ Resources:
                   - logs:*
                 Resource: '*'
       Path: /
-      RoleName: udapeopleec2role
+      RoleName: ec2role
 
 # RDS Service Role
   RDSServiceRole:
@@ -78,13 +77,13 @@ Resources:
                   - ec2:*
                 Resource: '*'
       Path: /
-      RoleName: udapeoplerdsrole
+      RoleName: rdsrole
 
 # EC2 Security Group
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub 'udapeopleSG-${WorkflowID}'
+      GroupName: !Sub 'ec2SecurityGroup-${resourceID}'
       GroupDescription: Allow access on specific ports
       VpcId: vpc-075baffa9194e6d87
       SecurityGroupIngress:

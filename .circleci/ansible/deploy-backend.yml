@@ -21,5 +21,6 @@
     - TYPEORM_ENTITIES: "{{ lookup('ansible.builtin.env', 'TYPEORM_ENTITIES')}}" 
     - TYPEORM_MIGRATIONS: "{{ lookup('ansible.builtin.env', 'TYPEORM_MIGRATIONS')}}"
     - TYPEORM_MIGRATIONS_DIR: "{{ lookup('ansible.builtin.env', 'TYPEORM_MIGRATIONS_DIR')}}"
+    - LATEST_BUILD_IDENTIFIER: "{{ lookup('ansible.builtin.env', 'LATEST_BUILD_IDENTIFIER')}}"
   roles:
     - deploy

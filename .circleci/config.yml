@@ -4,9 +4,13 @@ orbs:
   slack: circleci/slack@4.10.1
 
 parameters:
-  workflowID:
+  resourceID:
+    description: Unique resource identifier
     type: string
     default: cli803394216630
+  environment:
+    type: string
+    default: cfn-green
 #   run_integration_tests:
 #     type: boolean
 #     default: false
@@ -52,7 +56,19 @@ parameters:
   run_deploy_backend:
     type: boolean
     default: true
-
+  run_cloudfront_update:
+    type: boolean
+    default: false
+# Cloudfront
+  use_cloudfront: 
+    type: boolean
+    default: false
+  cloudfront_distribution_id:
+    type: string
+    default: ""
+  cloudfront_origin_id:
+    type: string
+    default: udapeoples3-cli803394216630
 # ansible config
   ans_inventory_file:
     type: string
@@ -85,7 +101,7 @@ commands:
     parameters:
       workflow_id:
         type: string
-        default: <<pipeline.parameters.workflowID>>
+        default: <<pipeline.parameters.resourceID>>
       access_key_id: 
         type: string
         description: AWS access key Id
@@ -101,7 +117,7 @@ commands:
       stackname:
         description: Name of stack 
         type: string
-        default: $CFN_STACKS
+        default: <<pipeline.parameters.environment>>
     steps:
       - run:
           name: Destroy environments
@@ -150,7 +166,9 @@ commands:
       commit_message:
         type: string
         default: "NO_BUILD Auto commit from CircleCI [skip ci]"
-
+      commit:
+          type: boolean
+          default: false 
     steps: 
       # - checkout
       # For a self-hosted runner, ensure that you have an ssh-agent on your system 
@@ -160,34 +178,38 @@ commands:
       # and <fingerprint> is the fingerprint of the key. 
       # A host entry is also appended to $HOME/.ssh/config, 
       # along with a relevant IdentityFile option to use the key.
-      - add_ssh_keys:
-          fingerprints:
-            - "43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc"
-      - run:
-          name: Commit to GitHub
-          command: |
-            if [[ -z "${CIRCLE_PULL_REQUEST}" ]]
-            then
-              printf "%s" 'github.com ssh-ed25519 43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc' >> "$HOME/.ssh/known_hosts"
-              if [ "${HOME}" = "/" ]
-              then
-                export HOME=$(getent passwd $(id -un) | cut -d: -f6)
-              fi
-              export GIT_SSH_COMMAND='ssh -i "$HOME/.ssh/id_ed25519" -o UserKnownHostsFile="$HOME/.ssh/known_hosts"'
-              echo "Committing to GitHub"
+      - when:
+          condition: 
+              not: <<parameters.commit>>
+          steps:
+            - add_ssh_keys:
+                fingerprints:
+                  - "43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc"
+            - run:
+                name: Commit to GitHub
+                command: |
+                  if [[ -z "${CIRCLE_PULL_REQUEST}" ]]
+                  then
+                    printf "%s" 'github.com ssh-ed25519 43:08:ce:f6:6f:04:b8:d2:53:1b:0c:fd:19:8f:2f:cc' >> "$HOME/.ssh/known_hosts"
+                    if [ "${HOME}" = "/" ]
+                    then
+                      export HOME=$(getent passwd $(id -un) | cut -d: -f6)
+                    fi
+                    export GIT_SSH_COMMAND='ssh -i "$HOME/.ssh/id_ed25519" -o UserKnownHostsFile="$HOME/.ssh/known_hosts"'
+                    echo "Committing to GitHub"
 
-              # use git+ssh instead of https
-              git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
-              git config --global gc.auto 0 || true
-              git config user.email $USER_EMAIL
-              git config user.name $USER_NAME
-              git checkout master
-              git pull origin master
-              git commit --allow-empty -am "<<parameters.commit_message>>"
-              git push origin master
-            else
-              echo "No commit to GitHub"
-            fi
+                    # use git+ssh instead of https
+                    git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
+                    git config --global gc.auto 0 || true
+                    git config user.email $USER_EMAIL
+                    git config user.name $USER_NAME
+                    git checkout master
+                    git pull origin master
+                    git commit --allow-empty -am "<<parameters.commit_message>>"
+                    git push origin master
+                  else
+                    echo "No commit to GitHub"
+                  fi
   revert-commit:
     description: >
       To revert a commit on fail , it needs to have a REVERT trigger in commit message.
@@ -478,9 +500,12 @@ commands:
         description: AWS default region
         default: $AWS_DEFAULT_REGION
       stackname:
-        description: Name of stack 
+        description: Name of top level stack 
         type: string
-        default: $CFN_STACKS
+      use_cloudfront: 
+        description: Create cloudfront
+      resourceID: 
+        description: Unique resource identifier
       s3bucket:
         description: Name of S3 bucket to store cloudformation artifacts 
         type: string
@@ -525,9 +550,13 @@ commands:
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
+              --parameters ParameterKey=Use_Cloudfront, ParameterValue=$PARAM_USE_CLOUDFRONT, ParameterKey=resourceID, ParameterValue=$PARAM_UNIQUE_ID\
               --capabilities <<parameters.capabilities>> \
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
+          environment: 
+            PARAM_USE_CLOUDFRONT: <<parameters.use_cloudfront>>
+            PARAM_UNIQUE_ID: <<parameters.resourceID>>
       - run:
           name: <<parameters.changename>> Status 
           command: |
@@ -585,9 +614,12 @@ commands:
         description: AWS default region
         default: $AWS_DEFAULT_REGION
       stackname:
-        description: Name of stack 
+        description: Name of top level stack 
         type: string
-        default: $CFN_STACKS
+      use_cloudfront: 
+        description: Create cloudfront
+      resourceID: 
+        description: Unique resource identifier
       changename:
         description: Name of stack change set
         type: string 
@@ -603,6 +635,9 @@ commands:
           access_key_id: <<parameters.access_key_id>>
           secret_access_key: <<parameters.secret_access_key>>
           region: <<parameters.region>>
+          resourceID: <<parameters.resourceID>>
+          stackname: <<parameters.stackname>>
+          use_cloudfront: <<parameters.use_cloudfront>>
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
@@ -773,7 +808,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD frontend npm audit fix"
-          # condition: <<pipeline.parameters.commit>>
+          commit: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - frontend/node_modules
@@ -814,7 +849,7 @@ jobs:
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD backend npm audit fix"
-          # condition: <<pipeline.parameters.commit>>
+          commit: <<pipeline.parameters.commit>>
       - save_cache:
           paths: 
             - backend/node_modules
@@ -868,7 +903,9 @@ jobs:
           # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          resourceID: <<pipeline.parameters.resourceID>>
+          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          stackname: <<pipeline.parameters.environment>>
           changename: compliance
           type: CREATE
           version: "1.0"
@@ -876,7 +913,7 @@ jobs:
           # access_key_id: $AWS_DB_ACCESS_KEY_ID
           # secret_access_key: $AWS_DB_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          # stackname: $CFN_STACKS
+          # stackname: <<pipeline.parameters.environment>>
           # changename: progresdb
           # type: UPDATE
           # version: "1.?"
@@ -886,7 +923,9 @@ jobs:
           # access_key_id: $AWS_USER_ACCESS_KEY_ID
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          resourceID: <<pipeline.parameters.resourceID>>
+          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          stackname: <<pipeline.parameters.environment>>
           changename: deploy-backend
           # type: UPDATE # default setting
           version: "1.1"
@@ -894,14 +933,18 @@ jobs:
           # access_key_id: $AWS_USER_ACCESS_KEY_ID
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          resourceID: <<pipeline.parameters.resourceID>>
+          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          stackname: <<pipeline.parameters.environment>>
           changename: deploy-frontend
           version: "1.2"
       - security_changes:
           # access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
-          stackname: $CFN_STACKS
+          resourceID: <<pipeline.parameters.resourceID>>
+          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          stackname: <<pipeline.parameters.environment>>
           changename: s3policy
           type: UPDATE
           version: "1.3"
@@ -913,21 +956,16 @@ jobs:
 # and all other jobs to false. This means you can setup the infrastructure and
 # disable this job in the next pipeline
 
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
-      # rollback changes to security_changes and admin user can delete
-      #     - create_changes:
-      #         stackname: $CFN_STACKS
-      #         changename: rollback-deploy
-      #         version: "1.0"  
-      # 
+        - slack/notify:
+            event: fail
+            template: basic_fail_1
+        # - jira/notify
+  # rollback changes to security_changes and admin user can delete
+  #     - create_changes:
+  #         stackname: <<pipeline.parameters.environment>>
+  #         changename: rollback-deploy
+  #         version: "1.0"  
+  # 
   configure-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -958,7 +996,7 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
 
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
 
             # Add back-end connection details to ansible inventory
             # default host inventory /etc/ansible/hosts
@@ -987,15 +1025,11 @@ jobs:
             # cleanup
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-      ##Below are options to deal with a failed job 
-      # 
-      - when:
-          condition: on_fail
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1
-            # - jira/notify
+
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
   run-migrations:
     <<: *defaults
     steps:
@@ -1029,11 +1063,11 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
 
             RDS_PORT=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
             RDS_HOST=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             export TYPEORM_HOST=localhost
             export TYPEORM_PORT=5532
@@ -1073,7 +1107,7 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
 
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
 
             aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/udapeople_ssh_key \
@@ -1100,6 +1134,50 @@ jobs:
           command: |
             aws s3 cp \
               ./migrations.txt s3://$CFN_BUCKET/migrations.txt 
+      - run: 
+          name: Run migrations tests
+          working_directory: ./backend
+          command: |
+            # Assumptions: All migrations in $TYPEORM_MIGRATIONS_DIR have not yet been executed
+            # and therefore are not present in the postgres database. To remove this assumption
+            # this command will have to parse the migrations report for any evidence of migrations
+            # already done. Or query the database of such migrations before testing.
+
+            # get migrations test details
+            ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
+
+            # get number of tests to perform
+            NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
+
+            # define test function
+            GREEN='\033[0;32m'       
+            RED='\033[0;31m'        
+            NC='\033[0m' 
+            test_migrations () {
+            PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
+            echo $PARSE_RESULT
+
+            case $PARSE_RESULT in
+            0)
+              printf "TEST: ${GREEN}PASSED${NC}\n"
+              ;;
+            *)
+              printf "TEST: ${RED}FAILED${NC}\n"
+              # trigger revert migrations
+              #exit 1
+              ;;           
+            esac
+            }
+            n=$(seq $NUMBER_OF_TESTS)
+            for i in $n
+            do
+              # define expected expression in migrations report
+              # e.g "Migration AddOrders1549375960026 has been executed successfully"
+              TEST_PASSED=$(sed -n "$i"p $MIGRATIONS_TESTS)
+              echo $TEST_PASSED
+              # parse migration report and assert expected expression
+              test_migrations "$TEST_PASSED" $MIGRATIONS_REPORT
+            done
       # - save_cache:
       #     paths: 
       #       - backend/node_modules
@@ -1132,11 +1210,11 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
 
             RDS_PORT=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
             RDS_HOST=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             export TYPEORM_HOST=localhost
             export TYPEORM_PORT=5532
@@ -1203,7 +1281,7 @@ jobs:
           working_directory: ./frontend
           command: |
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.workflowID>>') 
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
             export API_URL="http://${EC2_HOST}:3030"
             npm cache clean --force
             npm i
@@ -1212,7 +1290,7 @@ jobs:
           name: Deploy frontend objects
           command: |+
             aws s3 sync \
-              ./frontend/dist s3://udapeoples3-<<pipeline.parameters.workflowID>>/ --delete \
+              ./frontend/dist s3://udapeoples3-<<pipeline.parameters.resourceID>>/build-${CIRCLE_WORKFLOW_ID:0:7}/--delete \
               --acl public-read \
               --cache-control "max-age=86400"   
       - save_cache:
@@ -1225,6 +1303,11 @@ jobs:
             # cleanup
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
+      - run: 
+          name: Rollback frontend 
+          command: |
+            aws s3 rm s3://udapeoples3-<<pipeline.parameters.resourceID>>/build-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
+          when: on_fail
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -1273,11 +1356,11 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."dbname")
 
             export TYPEORM_PORT=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Port")
 
             export TYPEORM_HOST=$(aws rds describe-db-instances \
-                --db-instance-identifier backendDB-<<pipeline.parameters.workflowID>> \
+                --db-instance-identifier backendDB-<<pipeline.parameters.resourceID>> \
                 --output text --query "DBInstances[*].Endpoint.Address")
             export NODE_ENV=test
             # check other environment variables
@@ -1297,7 +1380,7 @@ jobs:
                 echo "In order to use the Deploy backend job a TYPEORM_MIGRATIONS_DIR environment variable must be present."
                 exit 1
             fi
-
+            export LATEST_BUILD_IDENTIFIER=${CIRCLE_WORKFLOW_ID:0:7}
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/deploy-backend.yml
 
             #cleanup
@@ -1316,6 +1399,8 @@ jobs:
       - run:
           name: rollback backend
           command: |
+            export LATEST_BUILD_IDENTIFIER=${CIRCLE_WORKFLOW_ID:0:7}
+
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/rollback-backend.yml
             # cleanup
             rm -f <<pipeline.parameters.ans_inventory_file>>
@@ -1325,43 +1410,68 @@ jobs:
           template: basic_fail_1
       # - jira/notify
 
-#   smoke-test:
-#     docker:
-#       # Lightweight Docker image 
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#       - run:
-#           name: Backend smoke test.
-#           command: |
-#             # your code here
-#       - run:
-#           name: Frontend smoke test.
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  smoke-test:
+    <<: *defaults
+    steps:
+      - check_job:
+          start_job: <<pipeline.parameters.run_smoke_test>>
+      - install_aws
+      - configure_aws:
+          access_key_id: $AWS_USER_ACCESS_KEY_ID
+          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+      - run:
+          name: Backend smoke test.
+          command: |
+            EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>')
+            curl http://$EC2_HOST:3030/api/status | grep "ok" > BACKEND_SMOKE_TEST
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL=http://udapeoples3-<<pipeline.parameters.resourceID>>..s3-website-us-east-1.amazonaws.com/build-${CIRCLE_WORKFLOW_ID:0:7}/#/employees
+            curl -S $URL | grep "Welcome"
+      - run:
+          name: Cleanup config
+          command: |
+            # cleanup aws 
+            rm -f $AWS_SHARED_CREDENTIALS_FILE
+            rm -f $AWS_CONFIG_FILE
+      # Here's where you will add some code to rollback on failure  
 
-#   cloudfront-update:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Update cloudfront distribution
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  cloudfront-update:
+    <<: *defaults
+    steps:
+      - check_job:
+          start_job: <<pipeline.parameters.run_cloudfront_update>>
+      - install_aws
+      - configure_aws:
+          access_key_id: $AWS_USER_ACCESS_KEY_ID
+          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
+            # get distribution
+            aws cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > /tmp/cloudfront.json
+
+            # get Etag
+            ETAG=$(jq -r '.Etag' cloudfront.json)
+
+            # save config
+
+            # change config
+            UPDATE_CONFIG=$(jq ".Distribution.DistributionConfig                    |
+              (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
+              .Origins.Items[].OriginPath) = \"/$S3_LATEST_BUILD_FOLDER\" " /tmp/cloudfront.json)
+            
+            # update
+            aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
+              --distribution-config $UPDATE_CONFIG
+          environment: 
+            PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
+            PARAM_CLOUDFRONT_ORIGIN_ID: <<pipeline.parameters.cloudfront_origin_id>>
+
+      # Here's where you will add some code to rollback on failure  
 
 # cleanup:
 #     docker:
@@ -1468,10 +1578,20 @@ workflows:
           context:
             - org-global
             - aws-context
-      # - smoke-test:
-      #     requires: [deploy-backend, deploy-frontend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
+      - smoke-test:
+          requires: 
+            - deploy-backend
+            - deploy-frontend
+      - slack/on-hold:
+          requires:
+            - smoke-test
+      - approve-update:
+          type: approval
+          requires: 
+            - smoke-test
+      - cloudfront-update:
+          requires: 
+            - approve-update
       # - cleanup:
       #     requires: [cloudfront-update]
   nightly:

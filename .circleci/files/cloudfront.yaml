@@ -2,10 +2,9 @@ Description: >
   Cloudfront distribution for UdaPeople.
 
 Parameters:
-  WorkflowID:
+  resourceID:
     Description: Unique identifier.
     Type: String
-    Default: cli803394216630
 
 
 Resources:
@@ -21,12 +20,12 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub 'udapeoples3-${WorkflowID}.s3.amazonaws.com'
-            Id: webpage
+          - DomainName: !Sub 'udapeoples3-${resourceID}.s3.amazonaws.com'
+            Id: udapeoples3-${resourceID}
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
         Enabled: True
-        DefaultRootObject: index.html
+        # DefaultRootObject: index.html
         DefaultCacheBehavior:
           ForwardedValues:
             QueryString: False
@@ -34,8 +33,9 @@ Resources:
           ViewerProtocolPolicy: allow-all
 
 Outputs:
-  WorkflowID:
-    Value: !Sub '${WorkflowID}'
-    Description: URL for website hosted on S3
-    Export:
-      Name: WorkflowID
+  DnsEndpoint:
+    Description: Cloudfront Endpoint Name 
+    Value: !GetAtt WebpageCDN.DomainName
+  DnsHostname:
+    Description: Cloudfront Host Name
+    Value: !Join [ '', [ 'http://', !GetAtt WebpageCDN.DomainName ] ]

@@ -4,13 +4,13 @@
   become: true
   ansible.builtin.unarchive:
     src: "/home/circleci/project/backend.tar.gz"
-    dest: /var/www/
+    dest: /var/www/build-{{ansible_env.LATEST_BUILD_IDENTIFIER}}
 
 - name: PM2 start app 
   ansible.builtin.shell: |
     pm2 start --name udapeople npm -- start
   args:
-    chdir: /var/www/backend/dist
+    chdir: /var/www/build-{{ansible_env.LATEST_BUILD_IDENTIFIER}}/backend/dist
     executable: /bin/bash
 
 

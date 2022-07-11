@@ -2,10 +2,9 @@ Description: >
   UdaPeople backend stack.
 
 Parameters:
-  WorkflowID:
+  resourceID:
     Description: Unique identifier.
     Type: String
-    Default: cli803394216630
 
 Resources:
   EC2Instance:
@@ -13,9 +12,9 @@ Resources:
     Properties:
       InstanceType: t2.micro
       SecurityGroups:
-        - !Sub 'udapeopleSG-${WorkflowID}'
+        - !Sub 'ec2SecurityGroup-${resourceID}'
       KeyName: '{{resolve:secretsmanager:UdaPeopleSSH:SecretString:keyname}}'
       ImageId: ami-0c4f7023847b90238  # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type (64-bit (x86))
       Tags:
         - Key: Name
-          Value: !Sub 'backend-${WorkflowID}'
+          Value: !Sub 'backend-${resourceID}'

@@ -3,8 +3,8 @@
 - name: cleanup backend files
   become: true
   ansible.builtin.shell: |
-    if [ -f "/var/www/backend" ]; then
-    sudo rm -rf /var/www/backend
+    if [ -f "/var/www/build-{{ansible_env.LATEST_BUILD_IDENTIFIER}}" ]; then
+    sudo rm -rf /var/www/build-{{ansible_env.LATEST_BUILD_IDENTIFIER}}
     fi
   args:
     executable: /bin/bash

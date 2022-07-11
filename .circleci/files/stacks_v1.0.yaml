@@ -1,10 +1,13 @@
 Description: >
-  UdaPeople top level Stack. Must be run by an admin IAM user.
+  Nested top level Stack. Must be run by an admin IAM user.
 Parameters:
-  WorkflowID:
+  resourceID:
     Description: Unique identifier.
     Type: String
-    Default: cli803394216630
+  Use_Cloudfront: 
+    Description: create cloudfront
+    Type: Boolean
+    Default: false
 Resources: 
   compliance:
     Type: AWS::CloudFormation::Stack
@@ -12,7 +15,7 @@ Resources:
       TemplateURL: security.yaml
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-compliance-${WorkflowID}'
+          Value: !Sub '${AWS::StackName}-compliance-${resourceID}'
   rdspostgres:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
@@ -21,4 +24,4 @@ Resources:
       TemplateURL: rds.yaml
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-rdspostgres-${WorkflowID}'
+          Value: !Sub '${AWS::StackName}-rdspostgres-${resourceID}'

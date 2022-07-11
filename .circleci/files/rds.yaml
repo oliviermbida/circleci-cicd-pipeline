@@ -2,10 +2,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   AWS CloudFormation Sample Template for creating an Amazon RDS DB 
 Parameters:
-  WorkflowID:
+  resourceID:
     Description: Unique identifier.
     Type: String
-    Default: cli803394216630
   DBClass:
     Default: db.t3.small
     Description: DB instance class
@@ -34,16 +33,16 @@ Resources:
         Ref: DBAllocatedStorage
       MasterUserPassword: '{{resolve:secretsmanager:UdaPeopleDB:SecretString:password}}'
       PubliclyAccessible: true
-      DBInstanceIdentifier: !Sub 'backendDB-${WorkflowID}'
+      DBInstanceIdentifier: !Sub 'backendDB-${resourceID}'
       Tags:
         - Key: Name
-          Value: !Sub 'backendDB-${WorkflowID}'
+          Value: !Sub 'backendDB-${resourceID}'
 # RDS Security Group
   DBSecurityGroup:
     Type: AWS::RDS::DBSecurityGroup
     Properties:
       DBSecurityGroupIngress:
-        EC2SecurityGroupName: !Sub 'udapeopleSG-${WorkflowID}'
+        EC2SecurityGroupName: !Sub 'ec2SecurityGroup-${resourceID}'
       GroupDescription: UdaPeople DB Security Group
 
 
