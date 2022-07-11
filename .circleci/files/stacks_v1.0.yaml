@@ -5,9 +5,16 @@ Parameters:
     Description: Unique identifier.
     Type: String
   useCloudfront: 
-    Description: create cloudfront
-    Type: Boolean
-    Default: false
+    Description: Choose if CloudFront Distribution is to serve the Web application content.
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: true
+Conditions:
+  CloudFrontAvailable:
+    !Equals [ !Ref useCloudFront, true ]
+
 Resources: 
   compliance:
     Type: AWS::CloudFormation::Stack

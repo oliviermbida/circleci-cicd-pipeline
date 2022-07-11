@@ -61,7 +61,7 @@ parameters:
     default: false
 # Cloudfront
   use_cloudfront: 
-    type: boolean
+    type: string
     default: true
   cloudfront_distribution_id:
     type: string
