@@ -5,7 +5,7 @@ Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  Use_Cloudfront: 
+  useCloudfront: 
     Description: create cloudfront
     Type: Boolean
     Default: false
@@ -46,6 +46,7 @@ Resources:
           Value: !Sub '${AWS::StackName}-frontend-${resourceID}'
   cdn:
     Type: AWS::CloudFormation::Stack
+    Condition: !Ref useCloudfront
     DependsOn: 
       - s3frontend
     Properties:

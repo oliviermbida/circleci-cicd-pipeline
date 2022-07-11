@@ -5,7 +5,7 @@ Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  Use_Cloudfront: 
+  useCloudfront: 
     Description: create cloudfront
     Type: Boolean
     Default: false
