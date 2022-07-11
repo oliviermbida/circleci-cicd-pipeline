@@ -956,16 +956,16 @@ jobs:
 # and all other jobs to false. This means you can setup the infrastructure and
 # disable this job in the next pipeline
 
-        - slack/notify:
-            event: fail
-            template: basic_fail_1
-        # - jira/notify
-  # rollback changes to security_changes and admin user can delete
-  #     - create_changes:
-  #         stackname: <<pipeline.parameters.environment>>
-  #         changename: rollback-deploy
-  #         version: "1.0"  
-  # 
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
+# rollback changes to security_changes and admin user can delete
+#     - create_changes:
+#         stackname: <<pipeline.parameters.environment>>
+#         changename: rollback-deploy
+#         version: "1.0"  
+# 
   configure-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
