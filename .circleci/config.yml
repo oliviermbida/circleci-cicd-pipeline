@@ -504,8 +504,10 @@ commands:
         type: string
       use_cloudfront: 
         description: Create cloudfront
+        type: boolean
       resourceID: 
         description: Unique resource identifier
+        type: string
       s3bucket:
         description: Name of S3 bucket to store cloudformation artifacts 
         type: string
@@ -618,8 +620,10 @@ commands:
         type: string
       use_cloudfront: 
         description: Create cloudfront
+        type: boolean
       resourceID: 
         description: Unique resource identifier
+        type: string
       changename:
         description: Name of stack change set
         type: string 
