@@ -21,11 +21,11 @@ Resources:
       DistributionConfig:
         Origins:
           - DomainName: !Sub 'udapeoples3-${resourceID}.s3.amazonaws.com'
-            Id: udapeoples3-${resourceID}
+            Id: web
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
         Enabled: True
-        # DefaultRootObject: index.html
+        DefaultRootObject: index.html
         DefaultCacheBehavior:
           ForwardedValues:
             QueryString: False
