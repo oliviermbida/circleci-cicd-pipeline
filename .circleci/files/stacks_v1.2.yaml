@@ -14,9 +14,9 @@ Parameters:
     Default: "yes"
 Conditions:
   CloudFrontAvailable:
-    !Equals [ !Ref useCloudFront, "yes" ]
+    !Equals [ !Ref useCloudfront, "yes" ]
 
-Resources: 
+Resources:
   compliance:
     Type: AWS::CloudFormation::Stack
     Properties:
