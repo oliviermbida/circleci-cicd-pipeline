@@ -961,7 +961,7 @@ jobs:
                 resourceID: <<pipeline.parameters.resourceID>>
                 # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
                 stackname: <<pipeline.parameters.environment>>
-                changename: deploy-frontend
+                changename: deploy-cloudfront
                 version: "1.4"
 
 # ----------------------------------------------------------

@@ -54,7 +54,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
       - s3frontend
-    Condition: CloudFrontAvailable
     Properties:
       Parameters:
         resourceID: !Ref resourceID
