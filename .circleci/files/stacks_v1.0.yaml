@@ -11,9 +11,7 @@ Parameters:
       - "yes"
       - "no"
     Default: "yes"
-Conditions:
-  CloudFrontAvailable:
-    !Equals [ !Ref useCloudFront, "yes" ]
+
 
 Resources: 
   compliance:
