@@ -1,20 +1,17 @@
 Description: >
-  Nested top level Stack Update version 2.
+  Nested top level Stack Update version 1.2
   Frontend deployment
 Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  useCloudfront: 
-    Description: Choose if CloudFront Distribution is to serve the Web application content.
-    Type: String
-    AllowedValues:
-      - "yes"
-      - "no"
-    Default: "yes"
-Conditions:
-  CloudFrontAvailable:
-    !Equals [ !Ref useCloudfront, "yes" ]
+  # useCloudfront: 
+  #   Description: Choose if CloudFront Distribution is to serve the Web application content.
+  #   Type: String
+  #   AllowedValues:
+  #     - "yes"
+  #     - "no"
+  #   Default: "yes"
 
 Resources:
   compliance:
@@ -59,15 +56,15 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-frontend-${resourceID}'
-  cdn:
-    Condition: CloudFrontAvailable
-    Type: AWS::CloudFormation::Stack
-    DependsOn: 
-      - s3frontend
-    Properties:
-      Parameters:
-        resourceID: !Ref resourceID
-      TemplateURL: cloudfront.yaml
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-cdn-${resourceID}'
+  # cdn:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn: 
+  #     - s3frontend
+  #   Condition: CloudFrontAvailable
+  #   Properties:
+  #     Parameters:
+  #       resourceID: !Ref resourceID
+  #     TemplateURL: cloudfront.yaml
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${AWS::StackName}-cdn-${resourceID}'

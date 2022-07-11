@@ -1,17 +1,17 @@
 Description: >
-  Nested top level Stack Update version 1.
+  Nested top level Stack Update version 1.1
   Backend deployment.
 Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  useCloudfront: 
-    Description: Choose if CloudFront Distribution is to serve the Web application content.
-    Type: String
-    AllowedValues:
-      - "yes"
-      - "no"
-    Default: "yes"
+  # useCloudfront: 
+  #   Description: Choose if CloudFront Distribution is to serve the Web application content.
+  #   Type: String
+  #   AllowedValues:
+  #     - "yes"
+  #     - "no"
+  #   Default: "yes"
 
 
 Resources: 

@@ -1,22 +1,13 @@
 Description: >
-  Nested top level Stack Update version 1.3
-  S3 Bucket Policy attachment. Must be run by an admin IAM user. 
+  Nested top level Stack Update version 1.4
+  Cloudfront deployment
 Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  # useCloudfront: 
-  #   Description: Choose if CloudFront Distribution is to serve the Web application content.
-  #   Type: String
-  #   AllowedValues:
-  #     - "yes"
-  #     - "no"
-  #   Default: "yes"
-# Conditions:
-#   CloudFrontAvailable:
-#     !Equals [ !Ref useCloudfront, "yes" ]
 
-Resources: 
+
+Resources:
   compliance:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -59,15 +50,15 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-frontend-${resourceID}'
-  # cdn:
-  #   Condition: CloudFrontAvailable
-  #   Type: AWS::CloudFormation::Stack
-  #   DependsOn: 
-  #     - s3frontend
-  #   Properties:
-  #     Parameters:
-  #       resourceID: !Ref resourceID
-  #     TemplateURL: cloudfront.yaml
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub '${AWS::StackName}-cloudfront-${resourceID}'
+  cdn:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - s3frontend
+    Condition: CloudFrontAvailable
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: cloudfront.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-cdn-${resourceID}'

@@ -61,8 +61,8 @@ parameters:
     default: false
 # Cloudfront
   use_cloudfront: 
-    type: string
-    default: "yes"
+    type: boolean
+    default: true
   cloudfront_distribution_id:
     type: string
     default: ""
@@ -502,9 +502,9 @@ commands:
       stackname:
         description: Name of top level stack 
         type: string
-      use_cloudfront: 
-        description: Create cloudfront
-        type: string
+      # use_cloudfront: 
+      #   description: Create cloudfront
+      #   type: string
       resourceID: 
         description: Unique resource identifier
         type: string
@@ -552,12 +552,11 @@ commands:
             change_set_ID=$(aws --output text --query "Id" cloudformation create-change-set \
               --stack-name <<parameters.stackname>> \
               --template-body file://.circleci/files/stacks_v<<parameters.version>>-packaged.yaml \
-              --parameters ParameterKey=useCloudfront,ParameterValue=$PARAM_USE_CLOUDFRONT ParameterKey=resourceID,ParameterValue=$PARAM_UNIQUE_ID \
+              --parameters ParameterKey=resourceID,ParameterValue=$PARAM_UNIQUE_ID \
               --capabilities <<parameters.capabilities>> \
               --change-set-name <<parameters.changename>> \
               --change-set-type <<parameters.type>> )
           environment: 
-            PARAM_USE_CLOUDFRONT: <<parameters.use_cloudfront>>
             PARAM_UNIQUE_ID: <<parameters.resourceID>>
       - run:
           name: <<parameters.changename>> Status 
@@ -618,9 +617,9 @@ commands:
       stackname:
         description: Name of top level stack 
         type: string
-      use_cloudfront: 
-        description: Create cloudfront
-        type: string
+      # use_cloudfront: 
+      #   description: Create cloudfront
+      #   type: string
       resourceID: 
         description: Unique resource identifier
         type: string
@@ -641,7 +640,7 @@ commands:
           region: <<parameters.region>>
           resourceID: <<parameters.resourceID>>
           stackname: <<parameters.stackname>>
-          use_cloudfront: <<parameters.use_cloudfront>>
+          # use_cloudfront: <<parameters.use_cloudfront>>
           changename: <<parameters.changename>>
           version: <<parameters.version>>
           type: <<parameters.type>>
@@ -908,7 +907,7 @@ jobs:
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
           resourceID: <<pipeline.parameters.resourceID>>
-          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
           stackname: <<pipeline.parameters.environment>>
           changename: compliance
           type: CREATE
@@ -928,7 +927,7 @@ jobs:
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
           resourceID: <<pipeline.parameters.resourceID>>
-          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
           stackname: <<pipeline.parameters.environment>>
           changename: deploy-backend
           # type: UPDATE # default setting
@@ -938,7 +937,7 @@ jobs:
           # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
           resourceID: <<pipeline.parameters.resourceID>>
-          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
           stackname: <<pipeline.parameters.environment>>
           changename: deploy-frontend
           version: "1.2"
@@ -947,12 +946,22 @@ jobs:
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
           resourceID: <<pipeline.parameters.resourceID>>
-          use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
           stackname: <<pipeline.parameters.environment>>
           changename: s3policy
           type: UPDATE
           version: "1.3"
-
+      - create_changes:
+          # access_key_id: $AWS_USER_ACCESS_KEY_ID
+          # secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          # region: $AWS_DEFAULT_REGION
+          resourceID: <<pipeline.parameters.resourceID>>
+          # use_cloudfront: <<pipeline.parameters.use_cloudfront>>
+          stackname: <<pipeline.parameters.environment>>
+          changename: deploy-frontend
+          version: "1.4"
+          when:
+            condition: use_cloudfront
 # ----------------------------------------------------------
 # create_changes command exits on failure notify concern individuals here.
 # Cloudformation is set to automatically rollback to last successfull update.
