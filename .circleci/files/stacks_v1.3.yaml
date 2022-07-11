@@ -9,12 +9,12 @@ Parameters:
     Description: Choose if CloudFront Distribution is to serve the Web application content.
     Type: String
     AllowedValues:
-      - yes
-      - no
-    Default: yes
+      - "yes"
+      - "no"
+    Default: "yes"
 Conditions:
   CloudFrontAvailable:
-    !Equals [ !Ref useCloudFront, yes ]
+    !Equals [ !Ref useCloudFront, "yes" ]
 
 Resources: 
   compliance:
