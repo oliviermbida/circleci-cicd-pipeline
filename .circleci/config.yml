@@ -1439,8 +1439,8 @@ jobs:
           start_job: <<pipeline.parameters.run_smoke_test>>
       - install_aws
       - configure_aws:
-          access_key_id: $AWS_USER_ACCESS_KEY_ID
-          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+          access_key_id: $AWS_ADMIN_ACCESS_KEY_ID
+          secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
       - run:
           name: Backend smoke test.
           command: |
