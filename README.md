@@ -320,7 +320,7 @@ The expected expresssion in the report will be of the form:
         Migration AddEmployee1555722583168 has been reverted successfully.
 
 
-![Revert Migrations](/docs/screenshots/REVERT_MIGRATIONS.png)
+![Revert Migrations](/docs/screenshots/SCREENSHOT07.png)
 
 
 # Deploy Frontend
@@ -353,6 +353,8 @@ SSH into backend EC2 instance and maually check that the PM2 service is running 
 ![Manual Approval](/docs/screenshots/APPROVAL01.png)
 
 ![Manual Approval](/docs/screenshots/APPROVAL02.png)
+
+![Slack Approval](/docs/screenshots/APPROVAL03.png)
 
 # Update
 
