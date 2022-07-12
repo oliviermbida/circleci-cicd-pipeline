@@ -259,7 +259,7 @@ Yes, the above command looks for migration files in the TYPEORM_MIGRATIONS_DIR a
 
         test_migrations () {
 
-        PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
+        PARSE_RESULT=$(grep -oh "$1" $2 >/dev/null; echo $?)
 
         case $PARSE_RESULT in
         0)
@@ -303,7 +303,58 @@ A failed test will exit 1 and since the Revert Migrations step is on condition o
 
 Obviously this is one way of testing if migrations were performed by parsing the migrations report but you can also go direct and query the database either manually as shown in the screenshot if it is a small migration or with queries to the database to see if they exist.
 
-Note: The command above assumes that TYPEORM_MIGRATIONS_DIR contains migrations which are not present in the postgres database. To remove this assumption a parse of other expected expressions of existing migrations is necessary.
+Note: The command above assumes that TYPEORM_MIGRATIONS_DIR contains migrations which are not present in the postgres database. To remove this assumption a parse of other expected expressions of existing migrations is necessary
+such as :
+
+        2 migrations are already loaded in the database.
+        3 migrations were found in the source code.
+        1 migrations are new migrations that needs to be executed.
+
+And refine the MIGRATIONS_TESTS to take into account the above details.
+
+# Revert migrations
+
+I can apply the same technique to check on migrations which have been reverted.
+The expected expresssion in the report will be of the form:
+
+        Migration AddEmployee1555722583168 has been reverted successfully.
+
+
+![Revert Migrations](/docs/screenshots/REVERT_MIGRATIONS.png)
+
+
+# Deploy Frontend
+
+Since the frontend is an S3 bucket there is a very simply command which will copy or sync the build artifacts:
+
+        aws s3 sync \
+        ./frontend/dist s3://$S3_BUCKET_NAME/build-${CIRCLE_WORKFLOW_ID:0:7}/--delete \
+        --acl public-read \
+        --cache-control "max-age=86400" 
+
+On failure:
+
+            aws s3 rm s3://$S3_BUCKET_NAME/build-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
+
+# Deploy Backend
+
+SSH into backend EC2 instance and maually check that the PM2 service is running the App
+
+![Revert Migrations](/docs/screenshots/DEPLOYBACKENDPM2.png)
+
+# Smoke Test
+
+![Frontend Test](/docs/screenshots/FRONTEND_SMOKE_TEST.png)
+
+![Backend Test](/docs/screenshots/BACKEND_SMOKE_TEST.png)
+
+# Manual Approval
+
+![Manual Approval](/docs/screenshots/APPROVAL01.png)
+
+![Manual Approval](/docs/screenshots/APPROVAL02.png)
+
+# Update
 
 # Troubleshooting by skipping jobs
 
