@@ -43,7 +43,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -1163,17 +1163,11 @@ jobs:
             # this command will have to parse the migrations report for any evidence of migrations
             # already done. Or query the database of such migrations before testing.
 
-            # get migrations test details
-            ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
-            cat /tmp/MIGRATIONS_TESTS
-            # get number of tests to perform
-            NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
-            echo $NUMBER_OF_TESTS
             # define test function
             GREEN='\033[0;32m'       
             RED='\033[0;31m'        
             NC='\033[0m' 
-            test_migrations () {
+            test_migrations() {
               PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
               echo $PARSE_RESULT
 
@@ -1188,6 +1182,14 @@ jobs:
                 ;;           
               esac
             }
+
+            # get migrations test details
+            ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
+            cat /tmp/MIGRATIONS_TESTS
+            # get number of tests to perform
+            NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
+            echo $NUMBER_OF_TESTS
+
             n=$(seq $NUMBER_OF_TESTS)
             for i in $n
             do
