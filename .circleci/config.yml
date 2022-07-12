@@ -1315,8 +1315,6 @@ jobs:
               ./frontend/dist s3://udapeoples3-<<pipeline.parameters.resourceID>>/build-${CIRCLE_WORKFLOW_ID:0:7}/ --delete \
               --acl public-read \
               --cache-control "max-age=86400"  
-            aws s3 website s3://udapeoples3-<<pipeline.parameters.resourceID>> \
-              --index-document index.html 
       - save_cache:
           paths: 
             - frontend/node_modules
@@ -1447,7 +1445,7 @@ jobs:
           name: Backend smoke test.
           command: |
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>')
+              ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>')
             curl http://$EC2_HOST:3030/api/status | grep "ok" > /tmp/BACKEND_SMOKE_TEST
             echo "Backend smoke test"
             GREEN='\033[0;32m'       
@@ -1462,7 +1460,7 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            URL=http://udapeoples3-<<pipeline.parameters.resourceID>>..s3-website-us-east-1.amazonaws.com/build-${CIRCLE_WORKFLOW_ID:0:7}/#/employees
+            URL=http://udapeoples3-<<pipeline.parameters.resourceID>>.s3-website-us-east-1.amazonaws.com/build-${CIRCLE_WORKFLOW_ID:0:7}/#/employees
             curl -S $URL | grep "Welcome" > /tmp/FRONTEND_SMOKE_TEST
             echo "Frontend smoke test"
             GREEN='\033[0;32m'       
