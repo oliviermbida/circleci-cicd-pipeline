@@ -886,7 +886,12 @@ jobs:
 ##You can revert/reset to the previous commit using its commit_sha
 #       - revert-commit:
 #           commit_sha: <<pipeline.parameters.commit_sha>>  
-#
+
+# Cloudformation deployment are time consuming and from testing various strategies
+# I have found that spliting the infrastructure into several change set updates
+# reduces the time it will take if it was just one nested stack template.
+# It is also a good strategy if you are dealing with many teams who have different requirements
+# and security priviledges
   deploy-infrastructure:
     docker:
       - image: cimg/python:3.9.13-node
@@ -1160,28 +1165,28 @@ jobs:
 
             # get migrations test details
             ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
-
+            cat /tmp/MIGRATIONS_TESTS
             # get number of tests to perform
             NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
-
+            echo $NUMBER_OF_TESTS
             # define test function
             GREEN='\033[0;32m'       
             RED='\033[0;31m'        
             NC='\033[0m' 
             test_migrations () {
-            PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
-            echo $PARSE_RESULT
+              PARSE_RESULT=$(grep -Fx "$1" $2 >/dev/null; echo $?)
+              echo $PARSE_RESULT
 
-            case $PARSE_RESULT in
-            0)
-              printf "TEST: ${GREEN}PASSED${NC}\n"
-              ;;
-            *)
-              printf "TEST: ${RED}FAILED${NC}\n"
-              # trigger revert migrations
-              #exit 1
-              ;;           
-            esac
+              case $PARSE_RESULT in
+              0)
+                printf "TEST: ${GREEN}PASSED${NC}\n"
+                ;;
+              *)
+                printf "TEST: ${RED}FAILED${NC}\n"
+                # trigger revert migrations
+                exit 1
+                ;;           
+              esac
             }
             n=$(seq $NUMBER_OF_TESTS)
             for i in $n
