@@ -1654,27 +1654,27 @@ jobs:
                   unset PARAM_CLOUDFRONT_ORIGIN_ID
                   unset PARAM_DISTRIBUTION_ID
                 when: on_fail
-      - run:
-          name: Cloudfront endpoint smoke test.
-          command: |
-            # get distribution details from stack outputs
-            CLOUDFRONT_DNS=$(aws --query "Stacks[].Outputs[?OutputKey=='DnsHostname'].OutputValue" \
-              --output text \
-              cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> )
-            URL=$CLOUDFRONT_DNS/#/employees
-            curl -S $URL | grep -oh "Welcome" > /tmp/CLOUDFRONT_SMOKE_TEST
-            echo "Cloudfront smoke test"
-            GREEN='\033[0;32m'       
-            RED='\033[0;31m'        
-            NC='\033[0m' 
-            TEST_PASSED=$(cat /tmp/CLOUDFRONT_SMOKE_TEST)
-            if [[ $TEST_PASSED == "Welcome" ]]; then
-              printf "TEST: ${GREEN}PASSED${NC}\n"
-            else
-              printf "TEST: ${RED}FAILED${NC}\n"
-              # trigger rollback
-              exit 1
-            fi
+      # - run:
+      #     name: Cloudfront endpoint smoke test.
+      #     command: |
+      #       # get distribution details from stack outputs
+      #       CLOUDFRONT_DNS=$(aws --query "Stacks[].Outputs[?OutputKey=='DnsHostname'].OutputValue" \
+      #         --output text \
+      #         cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> )
+      #       URL=$CLOUDFRONT_DNS/#/employees
+      #       curl -S $URL | grep -oh "Welcome" > /tmp/CLOUDFRONT_SMOKE_TEST
+      #       echo "Cloudfront smoke test"
+      #       GREEN='\033[0;32m'       
+      #       RED='\033[0;31m'        
+      #       NC='\033[0m' 
+      #       TEST_PASSED=$(cat /tmp/CLOUDFRONT_SMOKE_TEST)
+      #       if [[ $TEST_PASSED == "Welcome" ]]; then
+      #         printf "TEST: ${GREEN}PASSED${NC}\n"
+      #       else
+      #         printf "TEST: ${RED}FAILED${NC}\n"
+      #         # trigger rollback
+      #         exit 1
+      #       fi
 # cleanup:
 #     docker:
 #       # Docker image here
