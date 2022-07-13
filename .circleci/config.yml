@@ -1016,11 +1016,11 @@ jobs:
           name: Configure server
           command: |
             #        
-            ansible-playbook  -i .circleci/ansible/inventory.ini .circleci/ansible/configure-server.yml
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/configure-server.yml
       - persist_to_workspace:
           root: .
           paths:
-            - .circleci/ansible/inventory.ini
+            - <<pipeline.parameters.ans_inventory_file>>
       - run:
           name: Cleanup aws config
           command: |
@@ -1393,10 +1393,6 @@ jobs:
             unset TYPEORM_DATABASE
             unset TYPEORM_HOST
             unset TYPEORM_PORT
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .circleci/ansible/inventory.ini
       - run:
           name: Cleanup config
           command: |
@@ -1427,6 +1423,8 @@ jobs:
       - configure_aws:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
           secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+      - checkout
+      - check_master
       - install_ansible
       - configure_ansible
       - attach_workspace:
