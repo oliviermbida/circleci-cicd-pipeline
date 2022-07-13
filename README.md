@@ -161,6 +161,14 @@ I will use the same approach i.e start by checking that everything is working lo
 
 The migration strategy I will use will be to create a tunnel using the backend as a bastion to get to the postgres database which in most cases for security will not be in public subnet and therefore will not have public access.
 
+Before running the ssh tunnel below make sure your backend only allows authorized IP addresses in the Cidr block.
+
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: authorized_ips
+
         ssh -4 -i your_ec2_key_pair -f -N -L 5532:$RDS_HOST:5432 $EC2_USER@$EC2_HOST
 
 If you tag your EC2 instance with Name=my_ec2, you can filter as such:
@@ -357,6 +365,51 @@ SSH into backend EC2 instance and maually check that the PM2 service is running 
 ![Slack Approval](/docs/screenshots/APPROVAL03.png)
 
 # Update
+
+There are two scenarios to update the cloudfront distribution:
+
+1. If you are running a Blue/Green deployment, you may have a running cloudfront distribution serving your blue environment.
+In this case you don't need the workflow to create another one, you simply set the pipeline parameters to update your current cloudfront distribution details using your Distribution ID and the Origin ID.
+
+2. Here the workflow creates a Cloudfront distribution during the Deploy Infrastructure job and you can then query the stack outputs to get the cloudfront distribution details.
+
+![Stack Outputs](/docs/screenshots/STACK_OUTPUTS.png)
+
+        # get distribution details from stack outputs
+
+        aws --query "Stacks[].Outputs[?OutputKey=='DistributionID'].OutputValue" \
+        --output text \
+        cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
+        > DISTRIBUTION_ID
+
+        aws --query "Stacks[].Outputs[?OutputKey=='OriginID'].OutputValue" \
+        --output text \
+        cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
+        > CLOUDFRONT_ORIGIN_ID
+
+The update I will perform on the Cloudfront distribution is to change the OriginPath to the latest deployment folder S3_LATEST_BUILD_FOLDER of the frontend. 
+Get the current configuration 'cloudfront.json' of the distribution and update the OriginPath as such:
+
+        S3_LATEST_BUILD_FOLDER=build-${CIRCLE_WORKFLOW_ID:0:7}
+
+        jq ".Distribution.DistributionConfig                    |
+        (select(.Origins.Items[][\"Id\"] == \"$CLOUDFRONT_ORIGIN_ID\")  |
+        .Origins.Items[].OriginPath) = \"/$S3_LATEST_BUILD_FOLDER\" " ./cloudfront.json > cloudfront_update.json
+
+And then apply it to the cloudfront distribution:
+
+        aws cloudfront update-distribution --id $DISTRIBUTION_ID --if-match $ETAG \
+        --distribution-config file://./cloudfront_update.json > /dev/null 
+
+/dev/null is just to surpress the output of aws cli which can cause an error in Circleci even when the update is successful.
+I think the issue is to do with 'less' which you can install if you don't want to surpress the output.
+
+This approach of updating the latest deployment folder has the advantage of not pulling down stacks or deleted any infrastructure but just a folder which is less time consuming that creating new stacks.
+
+
+# Filter Jobs by branch
+
+![Filters](/docs/screenshots/SCREENSHOT10_1.png)
 
 # Troubleshooting by skipping jobs
 
