@@ -1583,8 +1583,9 @@ jobs:
                     cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
                     > CLOUDFRONT_ORIGIN_ID
 
-                  # get distribution
-                  aws --output json cloudfront get-distribution --id $DISTRIBUTION_ID > ./cloudfront.json
+                  # get 
+                  export PARAM_DISTRIBUTION_ID=$(cat DISTRIBUTION_ID)
+                  aws --output json cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > ./cloudfront.json
                   chmod 700 ./cloudfront.json
                   # get Etag
                   ETAG=$(jq -r '.ETag' ./cloudfront.json)
@@ -1600,8 +1601,7 @@ jobs:
                   chmod 700 ./cloudfront_update.json
 
                   # update
-                  export PARAM_DISTRIBUTION_ID=$(cat DISTRIBUTION_ID)
-                  aws cloudfront update-distribution --id $DISTRIBUTION_ID --if-match $ETAG \
+                  aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
                     --distribution-config file://./cloudfront_update.json  
 
                   #cleanup
