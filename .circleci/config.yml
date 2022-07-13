@@ -1658,11 +1658,9 @@ jobs:
           name: Cloudfront endpoint smoke test.
           command: |
             # get distribution details from stack outputs
-            aws --query "Stacks[].Outputs[?OutputKey=='DnsHostname'].OutputValue" \
+            CLOUDFRONT_DNS=$(aws --query "Stacks[].Outputs[?OutputKey=='DnsHostname'].OutputValue" \
               --output text \
-              cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
-              > DISTRIBUTION_URL
-            export CLOUDFRONT_DNS=$(cat DISTRIBUTION_URL)
+              cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> )
             URL=$CLOUDFRONT_DNS/#/employees
             curl -S $URL | grep -oh "Welcome" > /tmp/CLOUDFRONT_SMOKE_TEST
             echo "Cloudfront smoke test"
