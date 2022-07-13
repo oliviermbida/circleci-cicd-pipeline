@@ -22,28 +22,28 @@ parameters:
     default: false
   run_build_frontend:
     type: boolean
-    default: false
+    default: true
   run_build_backend:
     type: boolean
-    default: false
+    default: true
   run_test_frontend:
     type: boolean
-    default: false
+    default: true
   run_test_backend:
     type: boolean
-    default: false
+    default: true
   run_scan_frontend:
     type: boolean
-    default: false
+    default: true
   run_scan_backend:
     type: boolean
-    default: false
+    default: true
   run_scan_sonar:
     type: boolean
-    default: false
+    default: true
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -637,7 +637,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_build_frontend>>
       - checkout
-      - check_master
       - restore_cache:
           keys: 
             - v1-frontend-deps-{{ checksum "./frontend/package-lock.json" }}
@@ -668,7 +667,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_build_backend>>
       - checkout
-      - check_master
       - restore_cache:
           keys:
             - v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
@@ -699,7 +697,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_test_frontend>>
       - checkout
-      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -738,7 +735,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_test_backend>>
       - checkout
-      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -776,7 +772,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_scan_frontend>>
       - checkout
-      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -817,7 +812,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_scan_backend>>
       - checkout
-      - check_master
       # Restore from cache
       - restore_cache:
           keys: 
@@ -857,7 +851,6 @@ jobs:
       - check_job:
           start_job: <<pipeline.parameters.run_scan_sonar>>
       - checkout
-      - check_master
       - scan:
           project_root: .
 
@@ -1698,10 +1691,16 @@ workflows:
     jobs:
       - build-frontend:
           pre-steps: # Check commit message if NO_BUILD
-            - cancel-workflow      
+            - cancel-workflow   
+          filters:
+            branches:
+              only: development   
       - build-backend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
+          filters:
+            branches:
+              only: development
       - test-frontend:
           post-steps:
             - jira/notify:
@@ -1709,9 +1708,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: development
       - test-backend:
           post-steps:
             - jira/notify:
@@ -1719,9 +1718,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: development
       - scan-backend:
           post-steps:
             - jira/notify:
@@ -1729,6 +1728,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
+          filters:
+            branches:
+              only: development
       - scan-frontend:
           post-steps:
             - jira/notify:
@@ -1736,6 +1738,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
+          filters:
+            branches:
+              only: development
       - scan-sonar:
           post-steps:
             - when:
@@ -1747,6 +1752,9 @@ workflows:
           requires: 
             - build-frontend
             - build-backend
+          filters:
+            branches:
+              only: development
       - deploy-infrastructure:
           requires: 
             - test-frontend
@@ -1756,30 +1764,45 @@ workflows:
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - configure-infrastructure:
           requires: 
             - deploy-infrastructure
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - run-migrations:
           requires: 
             - configure-infrastructure
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - deploy-frontend:
           requires: 
             - run-migrations
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - deploy-backend:
           requires: 
             - run-migrations
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - smoke-test:
           requires: 
             - deploy-backend
@@ -1787,6 +1810,9 @@ workflows:
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
       - slack/on-hold:
           requires:
             - smoke-test
@@ -1800,6 +1826,10 @@ workflows:
           context:
             - org-global
             - aws-context
+          filters:
+            branches:
+              only: master
+  
       # - cleanup:
       #     requires: [cloudfront-update]
   nightly:
