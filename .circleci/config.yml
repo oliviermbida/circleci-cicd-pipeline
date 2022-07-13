@@ -1497,6 +1497,10 @@ jobs:
       - configure_aws:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
           secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+      # -run:
+      #   name: Install aws cli dependencies
+      #   command: |
+      #     sudo apt-get install less
 # For existing Cloudfront distribution not created by this workflow
 # use pipeline parameters to update the distribution
       - when: 
@@ -1524,7 +1528,7 @@ jobs:
 
                   # update
                   aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
-                    --distribution-config file://./cloudfront_update.json               
+                    --distribution-config file://./cloudfront_update.json  > /dev/null             
                 environment: 
                   PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
                   PARAM_CLOUDFRONT_ORIGIN_ID: <<pipeline.parameters.cloudfront_origin_id>>
@@ -1555,7 +1559,7 @@ jobs:
 
                   # apply rollback config
                   aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
-                    --distribution-config file://./rollback_cloudfront_update.json
+                    --distribution-config file://./rollback_cloudfront_update.json > /dev/null
 
                   # cleanup
                   rm -f ./rollback_cloudfront.json
@@ -1602,7 +1606,7 @@ jobs:
 
                   # update
                   aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
-                    --distribution-config file://./cloudfront_update.json  
+                    --distribution-config file://./cloudfront_update.json > /dev/null  
 
                   #cleanup
                   unset PARAM_CLOUDFRONT_ORIGIN_ID
@@ -1640,7 +1644,7 @@ jobs:
 
                   # apply rollback config
                   aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
-                    --distribution-config file://./rollback_cloudfront_update.json
+                    --distribution-config file://./rollback_cloudfront_update.json > /dev/null
 
                   # cleanup config
                   rm -f ./rollback_cloudfront.json
@@ -1649,7 +1653,30 @@ jobs:
                   rm -f DISTRIBUTION_ID
                   unset PARAM_CLOUDFRONT_ORIGIN_ID
                   unset PARAM_DISTRIBUTION_ID
-
+                when: on_fail
+      - run:
+          name: Cloudfront endpoint smoke test.
+          command: |
+            # get distribution details from stack outputs
+            aws --query "Stacks[].Outputs[?OutputKey=='DnsHostname'].OutputValue" \
+              --output text \
+              cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
+              > DISTRIBUTION_URL
+            export CLOUDFRONT_DNS=$(cat DISTRIBUTION_URL)
+            URL=$CLOUDFRONT_DNS/#/employees
+            curl -S $URL | grep -oh "Welcome" > /tmp/CLOUDFRONT_SMOKE_TEST
+            echo "Cloudfront smoke test"
+            GREEN='\033[0;32m'       
+            RED='\033[0;31m'        
+            NC='\033[0m' 
+            TEST_PASSED=$(cat /tmp/CLOUDFRONT_SMOKE_TEST)
+            if [[ $TEST_PASSED == "Welcome" ]]; then
+              printf "TEST: ${GREEN}PASSED${NC}\n"
+            else
+              printf "TEST: ${RED}FAILED${NC}\n"
+              # trigger rollback
+              exit 1
+            fi
 # cleanup:
 #     docker:
 #       # Docker image here
