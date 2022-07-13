@@ -1501,7 +1501,7 @@ jobs:
 # use pipeline parameters to update the distribution
       - when: 
           condition: 
-            Not: use_cloudfront
+            not: use_cloudfront
           steps:
             - run:
                 name: Update cloudfront distribution
