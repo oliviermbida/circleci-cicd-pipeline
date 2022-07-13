@@ -43,7 +43,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -58,7 +58,7 @@ parameters:
     default: true
   run_cloudfront_update:
     type: boolean
-    default: true
+    default: false
 # Cloudfront
   use_cloudfront: 
     type: boolean
@@ -1417,7 +1417,6 @@ jobs:
             # cleanup aws and ansible cfg
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-            #rm -f <<pipeline.parameters.ans_inventory_file>>
       - run:
           name: rollback backend
           command: |
@@ -1441,6 +1440,10 @@ jobs:
       - configure_aws:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
           secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+      - install_ansible
+      - configure_ansible
+      - attach_workspace:
+          at: .
       - run:
           name: Backend smoke test.
           command: |
@@ -1456,6 +1459,7 @@ jobs:
               printf "TEST: ${GREEN}PASSED${NC}\n"
             else
               printf "TEST: ${RED}FAILED${NC}\n"
+              # trigger rollback
               exit 1
             fi
       - run:
@@ -1472,6 +1476,7 @@ jobs:
               printf "TEST: ${GREEN}PASSED${NC}\n"
             else
               printf "TEST: ${RED}FAILED${NC}\n"
+              # trigger rollback
               exit 1
             fi
       - run:
@@ -1480,8 +1485,24 @@ jobs:
             # cleanup aws 
             rm -f $AWS_SHARED_CREDENTIALS_FILE
             rm -f $AWS_CONFIG_FILE
-      # Here's where you will add some code to rollback on failure  
+      - run: 
+          name: Smoke-Test Rollback frontend 
+          command: |
+            aws s3 rm s3://udapeoples3-<<pipeline.parameters.resourceID>>/build-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
+          when: on_fail
+      - run:
+          name: Smoke-Test rollback backend
+          command: |
+            export LATEST_BUILD_IDENTIFIER=${CIRCLE_WORKFLOW_ID:0:7}
 
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/rollback-backend.yml
+            # cleanup
+            rm -f <<pipeline.parameters.ans_inventory_file>>
+          when: on_fail
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      # - jira/notify
   cloudfront-update:
     <<: *defaults
     steps:
