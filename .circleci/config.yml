@@ -58,7 +58,7 @@ parameters:
     default: true
   run_cloudfront_update:
     type: boolean
-    default: false
+    default: true
 # Cloudfront
   use_cloudfront: 
     type: boolean
@@ -132,24 +132,6 @@ commands:
             aws cloudformation delete-stack --stack-name <<parameters.stackname>>
             fi
 
-#   revert-migrations:
-#     description: Revert the last migration if successfully run in the current workflow.
-#     parameters:
-#       # Add parameter here     
-#     steps:
-#       - run:
-#           name: Revert migrations
-#           # Add when this will run
-#           command: |
-#             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-#             SUCCESS = 1
-#             if(( $SUCCESS==1 )); 
-#             then
-#             #  cd ~/project/backend
-#             #  npm install
-#             #  Add revert code here. You can find this in the Getting Started section.
-#               exit 1
-#             fi
   check_master:
     description: Stop job if not master branch but continue with other jobs in pipeline          
     steps:        
@@ -1436,7 +1418,8 @@ jobs:
       # - jira/notify
 
   smoke-test:
-    <<: *defaults
+    docker:
+      - image: cimg/python:3.9.13-node
     steps:
       - check_job:
           start_job: <<pipeline.parameters.run_smoke_test>>
@@ -1582,7 +1565,92 @@ jobs:
                 environment: 
                   PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
                 when: on_fail
-      # Here's where you will add some code to rollback on failure  
+# For Cloudfront distribution created by this workflow
+# get distribution details from stack outputs
+      - when: 
+          condition: use_cloudfront
+          steps:
+            - run:
+                name: Update cloudfront distribution
+                command: |
+                  export S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
+
+                  # get distribution details from stack outputs
+                  aws --query "Stacks[].Outputs[?OutputKey=='DistributionID'].OutputValue" \
+                    --output text \
+                    cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
+                    > DISTRIBUTION_ID
+                  aws --query "Stacks[].Outputs[?OutputKey=='OriginID'].OutputValue" \
+                    --output text \
+                    cloudformation describe-stacks --stack-name <<pipeline.parameters.environment>> \
+                    > CLOUDFRONT_ORIGIN_ID
+
+                  # get distribution
+                  aws --output json cloudfront get-distribution --id $DISTRIBUTION_ID > ./cloudfront.json
+                  chmod 700 ./cloudfront.json
+                  # get Etag
+                  ETAG=$(jq -r '.ETag' ./cloudfront.json)
+
+                  # save OriginPath for rollback
+                  jq ".Distribution.DistributionConfig.Origins.Items[].OriginPath" ./cloudfront.json > SAVED_ORIGIN_PATH
+
+                  # change config
+                  export PARAM_CLOUDFRONT_ORIGIN_ID=$(cat CLOUDFRONT_ORIGIN_ID)
+                  jq ".Distribution.DistributionConfig                    |
+                    (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
+                    .Origins.Items[].OriginPath) = \"/$S3_LATEST_BUILD_FOLDER\" " ./cloudfront.json > cloudfront_update.json
+                  chmod 700 ./cloudfront_update.json
+
+                  # update
+                  export PARAM_DISTRIBUTION_ID=$(cat DISTRIBUTION_ID)
+                  aws cloudfront update-distribution --id $DISTRIBUTION_ID --if-match $ETAG \
+                    --distribution-config file://./cloudfront_update.json  
+
+                  #cleanup
+                  unset PARAM_CLOUDFRONT_ORIGIN_ID
+                  unset PARAM_DISTRIBUTION_ID
+            - run:
+                name: Cleanup config
+                command: |
+                  rm -f ./cloudfront.json
+                  rm -f ./cloudfront_update.json  
+            - run:
+                name: Rollback update
+                command: |
+                  if [ ! -f DISTRIBUTION_ID ] || [ ! -f CLOUDFRONT_ORIGIN_ID ]; then
+                    echo "Distribution config files missing"
+                    exit 1
+                  fi
+                  export S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
+                  # get updated distribution
+                  export PARAM_DISTRIBUTION_ID=$(cat DISTRIBUTION_ID)
+                  aws --output json cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > ./rollback_cloudfront.json
+                  chmod 700 ./rollback_cloudfront.json
+
+                  # get updated Etag
+                  ETAG=$(jq -r '.ETag' ./rollback_cloudfront.json)
+
+                  # get previous build directory
+                  export S3_PREVIOUS_BUILD_FOLDER=$(cat SAVED_ORIGIN_PATH)
+
+                  # rollback config
+                  export PARAM_CLOUDFRONT_ORIGIN_ID=$(cat CLOUDFRONT_ORIGIN_ID)
+                  jq ".Distribution.DistributionConfig                    |
+                    (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
+                    .Origins.Items[].OriginPath) = \"/$S3_PREVIOUS_BUILD_FOLDER\" " ./rollback_cloudfront.json > rollback_cloudfront_update.json
+                  chmod 700 ./rollback_cloudfront_update.json
+
+                  # apply rollback config
+                  aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
+                    --distribution-config file://./rollback_cloudfront_update.json
+
+                  # cleanup config
+                  rm -f ./rollback_cloudfront.json
+                  rm -f ./rollback_cloudfront_update.json
+                  rm -f CLOUDFRONT_ORIGIN_ID
+                  rm -f DISTRIBUTION_ID
+                  unset PARAM_CLOUDFRONT_ORIGIN_ID
+                  unset PARAM_DISTRIBUTION_ID
 
 # cleanup:
 #     docker:

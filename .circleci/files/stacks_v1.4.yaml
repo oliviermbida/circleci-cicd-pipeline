@@ -67,7 +67,7 @@ Outputs:
     Value: !GetAtt [ cdn, Outputs.DnsEndpoint ]
   DnsHostname:
     Description: Cloudfront Host Name
-    Value: !Join [ '', [ 'http://', !GetAtt [ cdn, Outputs.DnsHostname ]] ]
+    Value: !GetAtt [ cdn, Outputs.DnsHostname ]
   DistributionID: 
     Description: Cloudfront Distribution ID
     Value: !GetAtt [ cdn, Outputs.DistributionID ]

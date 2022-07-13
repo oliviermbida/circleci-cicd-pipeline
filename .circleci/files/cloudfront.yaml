@@ -44,5 +44,5 @@ Outputs:
     Value: !Ref WebpageCDN
   OriginID: 
     Description: Cloudfront Origin ID
-    Value: !GetAtt WebpageCDN.Id
+    Value: "webpage"
   
