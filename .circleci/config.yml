@@ -1411,6 +1411,10 @@ jobs:
             unset TYPEORM_DATABASE
             unset TYPEORM_HOST
             unset TYPEORM_PORT
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .circleci/ansible/inventory.ini
       - run:
           name: Cleanup config
           command: |
@@ -1512,30 +1516,72 @@ jobs:
       - configure_aws:
           access_key_id: $AWS_USER_ACCESS_KEY_ID
           secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
-            # get distribution
-            aws cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > /tmp/cloudfront.json
+# For existing Cloudfront distribution not created by this workflow
+# use pipeline parameters to update the distribution
+      - when: 
+          condition: 
+            Not: use_cloudfront
+          steps:
+            - run:
+                name: Update cloudfront distribution
+                command: |
+                  export S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
+                  # get distribution
+                  aws --output json cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > ./cloudfront.json
+                  chmod 700 ./cloudfront.json
+                  # get Etag
+                  ETAG=$(jq -r '.ETag' ./cloudfront.json)
 
-            # get Etag
-            ETAG=$(jq -r '.Etag' cloudfront.json)
+                  # save OriginPath for rollback
+                  jq ".Distribution.DistributionConfig.Origins.Items[].OriginPath" ./cloudfront.json > SAVED_ORIGIN_PATH
 
-            # save config
+                  # change config
+                  jq ".Distribution.DistributionConfig                    |
+                    (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
+                    .Origins.Items[].OriginPath) = \"/$S3_LATEST_BUILD_FOLDER\" " ./cloudfront.json > cloudfront_update.json
+                  chmod 700 ./cloudfront_update.json
 
-            # change config
-            UPDATE_CONFIG=$(jq ".Distribution.DistributionConfig                    |
-              (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
-              .Origins.Items[].OriginPath) = \"/$S3_LATEST_BUILD_FOLDER\" " /tmp/cloudfront.json)
-            
-            # update
-            aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
-              --distribution-config $UPDATE_CONFIG
-          environment: 
-            PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
-            PARAM_CLOUDFRONT_ORIGIN_ID: <<pipeline.parameters.cloudfront_origin_id>>
+                  # update
+                  aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
+                    --distribution-config file://./cloudfront_update.json               
+                environment: 
+                  PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
+                  PARAM_CLOUDFRONT_ORIGIN_ID: <<pipeline.parameters.cloudfront_origin_id>>
+            - run:
+                name: Cleanup config
+                command: |
+                  rm -f ./cloudfront.json
+                  rm -f ./cloudfront_update.json 
+            - run:
+                name: Rollback update
+                command: |
+                  export S3_LATEST_BUILD_FOLDER="build-${CIRCLE_WORKFLOW_ID:0:7}"
+                  # get updated distribution
+                  aws --output json cloudfront get-distribution --id $PARAM_DISTRIBUTION_ID > ./rollback_cloudfront.json
+                  chmod 700 ./rollback_cloudfront.json
 
+                  # get updated Etag
+                  ETAG=$(jq -r '.ETag' ./rollback_cloudfront.json)
+
+                  # get previous build directory
+                  export S3_PREVIOUS_BUILD_FOLDER=$(cat SAVED_ORIGIN_PATH)
+
+                  # rollback config
+                  jq ".Distribution.DistributionConfig                    |
+                    (select(.Origins.Items[][\"Id\"] == \"$PARAM_CLOUDFRONT_ORIGIN_ID\")  |
+                    .Origins.Items[].OriginPath) = \"/$S3_PREVIOUS_BUILD_FOLDER\" " ./rollback_cloudfront.json > rollback_cloudfront_update.json
+                  chmod 700 ./rollback_cloudfront_update.json
+
+                  # apply rollback config
+                  aws cloudfront update-distribution --id $PARAM_DISTRIBUTION_ID --if-match $ETAG \
+                    --distribution-config file://./rollback_cloudfront_update.json
+
+                  # cleanup
+                  rm -f ./rollback_cloudfront.json
+                  rm -f ./rollback_cloudfront_update.json
+                environment: 
+                  PARAM_DISTRIBUTION_ID: <<pipeline.parameters.cloudfront_distribution_id>>
+                when: on_fail
       # Here's where you will add some code to rollback on failure  
 
 # cleanup:

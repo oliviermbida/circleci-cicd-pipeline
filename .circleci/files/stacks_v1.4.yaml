@@ -61,3 +61,17 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-cdn-${resourceID}'
+Outputs:
+  DnsEndpoint:
+    Description: Cloudfront Endpoint Name 
+    Value: !GetAtt [ cdn, Outputs.DnsEndpoint ]
+  DnsHostname:
+    Description: Cloudfront Host Name
+    Value: !Join [ '', [ 'http://', !GetAtt [ cdn, Outputs.DnsHostname ]] ]
+  DistributionID: 
+    Description: Cloudfront Distribution ID
+    Value: !GetAtt [ cdn, Outputs.DistributionID ]
+  OriginID: 
+    Description: Cloudfront Origin ID
+    Value: !GetAtt [ cdn, Outputs.OriginID ]
+  

@@ -39,3 +39,10 @@ Outputs:
   DnsHostname:
     Description: Cloudfront Host Name
     Value: !Join [ '', [ 'http://', !GetAtt WebpageCDN.DomainName ] ]
+  DistributionID: 
+    Description: Cloudfront Distribution ID
+    Value: !Ref WebpageCDN
+  OriginID: 
+    Description: Cloudfront Origin ID
+    Value: !GetAtt WebpageCDN.Id
+  
