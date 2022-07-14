@@ -17,11 +17,11 @@ Circleci Pipeline to deploy a web application
 
 . Docker Cloud Test servers e.g SonarCloud
 
-. JIRA issue integration
+. JIRA issue integration and Project management
 
 . Slack issue notification
 
-- Security
+# Security
 
 . Multi IAM users Circleci pipeline job step execution i.e IAM users such as Admin(security), Database Admin , DevOps team and web developers each have different priviledges in setting up infrastructure and configuration. An example of how different teams have to collaborate.
 
@@ -31,11 +31,15 @@ Circleci Pipeline to deploy a web application
 These details can only be shared with the credentials of an authorize IAM user such as Admin(security) or Database Admin.
 Secrets can be rotated without the need of manually deleting and adding new environment variables in Circleci context.
 
-- Features
+# Features
 
-. Status sync with Circleci pipeline when deploying infrastructure to AWS
+. Stack status sync in Circleci pipeline when deploying infrastructure to AWS
 
 . Git Push command available in Circleci job step to commit for example audit fixes back to master
+
+. Optionally create a cloudfront distribution. Used pipeline paramaters for existing distribution for example in setting up blue environment. 
+
+. Can setup AWS infrastructure in isolated job and re-use it to run deployment jobs saving time.
 
 # Build
 
@@ -406,6 +410,11 @@ I think the issue is to do with 'less' which you can install if you don't want t
 
 This approach of updating the latest deployment folder has the advantage of not pulling down stacks or deleted any infrastructure but just a folder which is less time consuming that creating new stacks.
 
+# Teardown
+
+This teardowns the whole aws infrastructure:
+
+        aws cloudformation delete-stack --stack-name <<pipeline.parameters.environment>>
 
 # Filter Jobs by branch
 

@@ -96,12 +96,9 @@ commands:
 # to do so untill a clean up of the failed update is completed.
   destroy-environment:
     description: >
-      Destroy back-end and front-end cloudformation stacks given a workflow ID.
+      Destroy back-end and front-end cloudformation stacks 
       Can only be done by an Admin IAM user.
     parameters:
-      workflow_id:
-        type: string
-        default: <<pipeline.parameters.resourceID>>
       access_key_id: 
         type: string
         description: AWS access key Id
@@ -128,9 +125,9 @@ commands:
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
 
             # delete infrastructure
-            if [[ <<parameters.workflow_id>> == $CIRCLE_WORKFLOW_ID ]]; then
+
             aws cloudformation delete-stack --stack-name <<parameters.stackname>>
-            fi
+
 
   check_master:
     description: Stop job if not master branch but continue with other jobs in pipeline          
@@ -1692,15 +1689,15 @@ workflows:
       - build-frontend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow   
-          # filters:
-          #   branches:
-          #     only: development   
+          filters:
+            branches:
+              only: development   
       - build-backend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - test-frontend:
           post-steps:
             - jira/notify:
@@ -1708,9 +1705,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - test-backend:
           post-steps:
             - jira/notify:
@@ -1718,9 +1715,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - scan-backend:
           post-steps:
             - jira/notify:
@@ -1728,9 +1725,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - scan-frontend:
           post-steps:
             - jira/notify:
@@ -1738,9 +1735,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - scan-sonar:
           post-steps:
             - when:
@@ -1752,9 +1749,9 @@ workflows:
           requires: 
             - build-frontend
             - build-backend
-          # filters:
-          #   branches:
-          #     only: development
+          filters:
+            branches:
+              only: development
       - deploy-infrastructure:
           # requires: 
           #   - test-frontend
