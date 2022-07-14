@@ -1756,11 +1756,11 @@ workflows:
           #   branches:
           #     only: development
       - deploy-infrastructure:
-          requires: 
-            - test-frontend
-            - test-backend
-            - scan-frontend
-            - scan-backend
+          # requires: 
+          #   - test-frontend
+          #   - test-backend
+          #   - scan-frontend
+          #   - scan-backend
           context:
             - org-global
             - aws-context
