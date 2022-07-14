@@ -455,3 +455,7 @@ So more to do to clean it up using other security tools in the workflow.
 ![Github security alerts backend fix](/docs/screenshots/security_github_backend_fix.png)
 
 Please note that commiting these audit fixes will have a major impact on the App. For example if developers have injected some dependencies which have been found to be a security vulnerability and these audit fixes removed them then you will find that builds start to fail.
+
+# Troubleshoot with ssh
+
+![Run jon with ssh ](/docs/screenshots/TROUBLESHOOT_SSH.png)
