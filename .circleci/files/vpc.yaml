@@ -1,0 +1,918 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:  Creates VPC stack with subnets, network acls, Internet gateway, Nat gateways and Vpc S3 endpoint. 
+Metadata:
+  Authors:
+    Description: Olivier Mbida (olivier.mbida@ai-uavsystems.com)
+Parameters: 
+  WorkflowID:
+    Description: Unique identifier.
+    Type: String
+    Default: cli803394216630
+  AWSRegion:
+    Type: String
+    AllowedValues: 
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+    Default: us-east-1
+  VpcAzs:
+    Description: Availability Zones used in VPC. 
+    Type: CommaDelimitedList
+  AzsMap:
+    Description: Availability Zones Map. Must match available zones in VpcAZs parameter. 
+    Type: String
+  VpcCidr:
+    Description: CIDR block for the VPC
+    Type: String
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+  VpcTenancy:
+    AllowedValues:
+      - default
+      - dedicated
+    Default: default
+    Type: String
+  PublicSubnetCidrBlocks:
+    Description: "Comma-delimited list of Public CIDR blocks"
+    Type: CommaDelimitedList
+    Default: "10.0.200.0/24, 10.0.201.0/24, 10.0.202.0/24, 10.0.203.0/24, 10.0.204.0/24, 10.0.205.0/24"
+  PrivateSubnetCidrBlocks:
+    Description: "Comma-delimited list of Private CIDR blocks"
+    Type: CommaDelimitedList
+    Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22, 10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
+  S3BucketName:
+    Description: S3 Bucket Name for Vpc Endpoint
+    Type: String
+    Default: udapeoples3-cli803394216630
+  SshAccessCidr:
+    Description: The CIDR IP range that is permitted to SSH to bastion instance. Note - a value of 0.0.0.0/0 will allow access from ANY IP address.
+    Type: String
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Default: 0.0.0.0/0    
+#
+Conditions:
+  AZ0Condition:
+    !Equals [!Select [0, !Split [",", !Ref AzsMap]], 1]  
+  AZ1Condition:
+    !Equals [!Select [1, !Split [",", !Ref AzsMap]], 2] 
+  AZ2Condition:
+    !Equals [!Select [2, !Split [",", !Ref AzsMap]], 3] 
+  AZ3Condition:
+    !Equals [!Select [3, !Split [",", !Ref AzsMap]], 4] 
+  AZ4Condition:
+    !Equals [!Select [4, !Split [",", !Ref AzsMap]], 5] 
+  AZ5Condition:
+    !Equals [!Select [5, !Split [",", !Ref AzsMap]], 6] 
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      InstanceTenancy: !Ref VpcTenancy
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Vpc / ', !Ref 'AWS::StackName' ] ]
+# Public subnets
+  PublicSubnet0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [0, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [0, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet0 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+  PublicSubnet1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [1, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [1, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet1 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+  PublicSubnet2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [2, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [2, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet2 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+  PublicSubnet3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [3, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [3, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet3 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+  PublicSubnet4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [4, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [4, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet4 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+  PublicSubnet5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [5, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [5, !Ref PublicSubnetCidrBlocks]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicSubnet5 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Public
+# Private subnets
+  PrivateSubnet0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [0, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [0, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet0 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+  PrivateSubnet1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [1, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [1, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet1 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+  PrivateSubnet2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [2, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [2, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet2 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+  PrivateSubnet3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [3, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [3, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet3 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+  PrivateSubnet4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [4, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [4, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet4 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+  PrivateSubnet5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId: 
+        !Select [5, !Ref VpcAzs]
+      VpcId: !Ref Vpc
+      CidrBlock: !Select [5, !Ref PrivateSubnetCidrBlocks]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PrivateSubnet5 / ', !Ref 'AWS::StackName' ] ]
+        - Key: SubnetType
+          Value: Private
+# Internet Gateway & Public subnets routing
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'InternetGateway / ', !Ref 'AWS::StackName' ] ]
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref Vpc
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'PublicRouteTable / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicRouteTableAssociation0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet0
+      RouteTableId: !Ref PublicRouteTable
+  PublicRouteTableAssociation1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  PublicRouteTableAssociation2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  PublicRouteTableAssociation3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+  PublicRouteTableAssociation4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet4
+      RouteTableId: !Ref PublicRouteTable
+  PublicRouteTableAssociation5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet5
+      RouteTableId: !Ref PublicRouteTable   
+# NAT Gateways & Private subnets routing
+
+# Limitations: Limited by the number of Elastic IPs you can hold per account 
+# It may not be possible to use all the six Availability Zones if they are available
+# In this case you can not deploy and cloudformation will report the account limits
+# Choose a minimum of 2 Availability Zones in a region if they are available in your account for a start.
+  NatRouteTable0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable0 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP0.AllocationId
+      SubnetId: !Ref PublicSubnet0
+  NatRoute0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable0
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway0
+  NatRouteTable1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable1 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  NatRoute1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+  NatRouteTable2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable2 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+  NatRoute2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+  NatRouteTable3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable3 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP3.AllocationId
+      SubnetId: !Ref PublicSubnet3
+  NatRoute3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway3
+  NatRouteTable4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable4 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP4.AllocationId
+      SubnetId: !Ref PublicSubnet4
+  NatRoute4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable4
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway4
+  NatRouteTable5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', ['NatRouteTable5 / ', !Ref 'AWS::StackName' ] ]
+        - Key: Network
+          Value: Public
+      VpcId: !Ref Vpc 
+  NatEIP5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: Vpc
+  NatGateway5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachInternetGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP5.AllocationId
+      SubnetId: !Ref PublicSubnet5
+  NatRoute5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref NatRouteTable5
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway5
+  PrivateSubnetRouteTableAssociation0:
+    Condition: AZ0Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable0
+      SubnetId: !Ref PrivateSubnet0
+  PrivateSubnetRouteTableAssociation1:
+    Condition: AZ1Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+  PrivateSubnetRouteTableAssociation2:
+    Condition: AZ2Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+  PrivateSubnetRouteTableAssociation3:
+    Condition: AZ3Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable3
+      SubnetId: !Ref PrivateSubnet3
+  PrivateSubnetRouteTableAssociation4:
+    Condition: AZ4Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable4
+      SubnetId: !Ref PrivateSubnet4
+  PrivateSubnetRouteTableAssociation5:
+    Condition: AZ5Condition
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref NatRouteTable5
+      SubnetId: !Ref PrivateSubnet5   
+# Network access control
+  PublicNetworkACL:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: "Name"
+          Value: !Join [ '', [ 'PublicNetworkACL / ', !Ref 'AWS::StackName' ] ]
+  PrivateNetworkACL:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: "Name"
+          Value: !Join [ '', [ 'PrivateNetworkACL / ', !Ref 'AWS::StackName' ] ]
+  PublicSubnet0NetworkAclAssociation:
+    Condition: AZ0Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet0
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PublicSubnet1NetworkAclAssociation:
+    Condition: AZ1Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PublicSubnet2NetworkAclAssociation:
+    Condition: AZ2Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PublicSubnet3NetworkAclAssociation:
+    Condition: AZ3Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PublicSubnet4NetworkAclAssociation:
+    Condition: AZ4Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet4
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PublicSubnet5NetworkAclAssociation:
+    Condition: AZ5Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet5
+      NetworkAclId: !Ref "PublicNetworkACL"
+  PrivateSubnet0NetworkAclAssociation:
+    Condition: AZ0Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet0
+      NetworkAclId: !Ref "PrivateNetworkACL"
+  PrivateSubnet1NetworkAclAssociation:
+    Condition: AZ1Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      NetworkAclId: !Ref "PrivateNetworkACL"
+  PrivateSubnet2NetworkAclAssociation:
+    Condition: AZ2Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      NetworkAclId: !Ref "PrivateNetworkACL"
+  PrivateSubnet3NetworkAclAssociation:
+    Condition: AZ3Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      NetworkAclId: !Ref "PrivateNetworkACL"
+  PrivateSubnet4NetworkAclAssociation:
+    Condition: AZ4Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet4
+      NetworkAclId: !Ref "PrivateNetworkACL"
+  PrivateSubnet5NetworkAclAssociation:
+    Condition: AZ5Condition
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet5
+      NetworkAclId: !Ref "PrivateNetworkACL"
+
+# Public Network ACL Firewall Protection
+
+# Internet-facing load balancer acls, listener port 80
+  InboundHttpACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '100'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '80'
+        To: '80'
+  InboundHttpsACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '200'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '443'
+        To: '443'
+  InboundSshACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '300'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: !Ref SshAccessCidr
+      PortRange:
+        From: '22'
+        To: '22'
+# Internet-facing load balancer acls
+  InboundEphACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '400'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '1024'
+        To: '65535'
+  InboundEphACLUdp:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '410'
+      Protocol: "17"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '1024'
+        To: '65535'
+  OutboundHttpACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '100'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '80'
+        To: '80'
+  OutboundHttpsACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '200'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '443'
+        To: '443'
+  OutboundSshACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '300'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: !Ref SshAccessCidr
+      PortRange:
+        From: '22'
+        To: '22'
+  OutboundEphACL:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '400'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '1024'
+        To: '65535'
+  OutboundEphACLUdp:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PublicNetworkACL
+      RuleNumber: '410'
+      Protocol: "17"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '1024'
+        To: '65535'
+# Private Network ACL Firewall Protection
+  InboundHttpACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '100'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: !Ref VpcCidr 
+      PortRange:
+        From: '80'
+        To: '80'
+  InboundHttpsACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '200'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: !Ref VpcCidr 
+      PortRange:
+        From: '443'
+        To: '443'
+  InboundSshACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '300'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: !Ref VpcCidr
+      PortRange:
+        From: '22'
+        To: '22'
+  InboundEphACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '400'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '1024'
+        To: '65535'
+  InboundEphACLUdpP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '410'
+      Protocol: "17"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0" 
+      PortRange:
+        From: '1024'
+        To: '65535'
+  OutboundHttpACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '100'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '80'
+        To: '80'
+  OutboundHttpsACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '200'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: '443'
+        To: '443'
+  OutboundSshACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '300'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: !Ref VpcCidr
+      PortRange:
+        From: '22'
+        To: '22'
+  OutboundEphACLP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '400'
+      Protocol: "6"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: !Ref VpcCidr
+      PortRange:
+        From: '1024'
+        To: '65535'
+  OutboundEphACLUdpP:
+    Type: "AWS::EC2::NetworkAclEntry"
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkACL
+      RuleNumber: '410'
+      Protocol: "17"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: !Ref VpcCidr
+      PortRange:
+        From: '1024'
+        To: '65535'
+# S3 VpcEndpoint
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Ref: S3BucketName
+                - '/*'
+      RouteTableIds:
+        - Ref: PublicRouteTable
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref Vpc 
+#
+Outputs:
+  Vpc:
+    Description: New VPC
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcID"
+  VpcCidr:
+    Description: VPC Cidr block 
+    Value: !Ref VpcCidr
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcCidr"
+  PublicSubnets:
+    Description: Public subnets 
+    Value:
+      Fn::Join:
+      - ''
+      - - !If [ AZ0Condition, !Sub '${PublicSubnet0},', ''] 
+        - !If [ AZ1Condition, !Sub '${PublicSubnet1},', '']
+        - !If [ AZ2Condition, !Sub '${PublicSubnet2},', '']
+        - !If [ AZ3Condition, !Sub '${PublicSubnet3},', '']
+        - !If [ AZ4Condition, !Sub '${PublicSubnet4},', '']
+        - !If [ AZ5Condition, !Sub '${PublicSubnet5}', '']
+  PrivateSubnets:
+    Description: Private subnets
+    Value:
+      Fn::Join:
+      - ''
+      - - !If [ AZ0Condition, !Sub '${PrivateSubnet0},', ''] 
+        - !If [ AZ1Condition, !Sub '${PrivateSubnet1},', '']
+        - !If [ AZ2Condition, !Sub '${PrivateSubnet2},', '']
+        - !If [ AZ3Condition, !Sub '${PrivateSubnet3},', '']
+        - !If [ AZ4Condition, !Sub '${PrivateSubnet4},', '']
+        - !If [ AZ5Condition, !Sub '${PrivateSubnet5}', '']
