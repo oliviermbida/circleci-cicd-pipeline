@@ -22,25 +22,25 @@ parameters:
     default: false
   run_build_frontend:
     type: boolean
-    default: true
+    default: false
   run_build_backend:
     type: boolean
-    default: true
+    default: false
   run_test_frontend:
     type: boolean
-    default: true
+    default: false
   run_test_backend:
     type: boolean
-    default: true
+    default: false
   run_scan_frontend:
     type: boolean
-    default: true
+    default: false
   run_scan_backend:
     type: boolean
-    default: true
+    default: false
   run_scan_sonar:
     type: boolean
-    default: true
+    default: false
   run_deploy_infrastructure:
     type: boolean
     default: true
@@ -1692,15 +1692,15 @@ workflows:
       - build-frontend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow   
-          filters:
-            branches:
-              only: development   
+          # filters:
+          #   branches:
+          #     only: development   
       - build-backend:
           pre-steps: # Check commit message if NO_BUILD
             - cancel-workflow
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - test-frontend:
           post-steps:
             - jira/notify:
@@ -1708,9 +1708,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - test-backend:
           post-steps:
             - jira/notify:
@@ -1718,9 +1718,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - scan-backend:
           post-steps:
             - jira/notify:
@@ -1728,9 +1728,9 @@ workflows:
                 job_type: build
           requires: 
             - build-backend
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - scan-frontend:
           post-steps:
             - jira/notify:
@@ -1738,9 +1738,9 @@ workflows:
                 job_type: build
           requires: 
             - build-frontend
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - scan-sonar:
           post-steps:
             - when:
@@ -1752,9 +1752,9 @@ workflows:
           requires: 
             - build-frontend
             - build-backend
-          filters:
-            branches:
-              only: development
+          # filters:
+          #   branches:
+          #     only: development
       - deploy-infrastructure:
           requires: 
             - test-frontend
