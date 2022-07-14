@@ -4,14 +4,6 @@ Parameters:
   resourceID:
     Description: Unique identifier.
     Type: String
-  # useCloudfront: 
-  #   Description: Choose if CloudFront Distribution is to serve the Web application content.
-  #   Type: String
-  #   AllowedValues:
-  #     - "yes"
-  #     - "no"
-  #   Default: "yes"
-
 
 Resources: 
   compliance:
