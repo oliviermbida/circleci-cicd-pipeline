@@ -3,16 +3,17 @@
 - name: cleanup backend oldworkflow
   become: true
   ansible.builtin.shell: |
-    find /var/www -type d -name "build-*" >> builds.txt
-    NUMBER_OF_BUILDS=$(grep -c ^ builds.txt)
-    n=$(seq $NUMBER_OF_BUILDS)
+    find /var/www -type d -name "build-*" | grep -v /var/www/${LATEST_BUILD_IDENTIFIER}* > builds.txt
+    NUMBER_OF_BUILD_FILES=$(grep -c ^ builds.txt)
+    n=$(seq $NUMBER_OF_BUILD_FILES)
     for i in $n
     do
-      # get build directory
-      BUILD_DIRECTORY=$(sed -n "$i"p builds.txt)
-      if [ $BUILD_DIRECTORY != "/var/www/build-${LATEST_BUILD_IDENTIFIER}" ]; then
-        sudo rm -rf $BUILD_DIRECTORY
-      fi
+      # get build file
+      BUILD_FILE=$(sed -n "$i"p builds.txt)
+      # delete file
+      sudo rm -rf $BUILD_FILE
     done
+    #cleanup
+    rm -f builds.txt
   args:
     executable: /bin/bash
