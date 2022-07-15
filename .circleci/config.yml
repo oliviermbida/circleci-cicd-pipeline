@@ -1411,8 +1411,7 @@ jobs:
       # - jira/notify
 
   smoke-test:
-    docker:
-      - image: cimg/python:3.9.13-node
+    <<: *defaults
     steps:
       - check_job:
           start_job: <<pipeline.parameters.run_smoke_test>>
