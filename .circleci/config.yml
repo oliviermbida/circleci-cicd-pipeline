@@ -49,7 +49,7 @@ parameters:
     default: true
   run_migrations:
     type: boolean
-    default: true
+    default: false
   run_deploy_frontend:
     type: boolean
     default: true
