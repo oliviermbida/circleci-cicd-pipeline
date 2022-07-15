@@ -1758,39 +1758,39 @@ jobs:
       #         # trigger rollback
       #         exit 1
       #       fi
-cleanup:
-    <<: *defaults
-    steps:
-      - check_job:
-          start_job: <<pipeline.parameters.run_smoke_test>>
-      - install_aws
-      - configure_aws:
-          access_key_id: $AWS_USER_ACCESS_KEY_ID
-          secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
-      - checkout
-      - check_master
-      - install_ansible
-      - configure_ansible
-      - attach_workspace:
-          at: .
-      - run: 
-          name: Cleanup frontend old workflow 
-          command: |
-            aws s3 rm s3://udapeoples3-<<pipeline.parameters.resourceID>>/ --recursive  --exclude "build-${CIRCLE_WORKFLOW_ID:0:7}/*"
-      - run:
-          name: Cleanup backend old workflow
-          command: |
-            export LATEST_BUILD_IDENTIFIER=${CIRCLE_WORKFLOW_ID:0:7}
+  cleanup:
+      <<: *defaults
+      steps:
+        - check_job:
+            start_job: <<pipeline.parameters.run_smoke_test>>
+        - install_aws
+        - configure_aws:
+            access_key_id: $AWS_USER_ACCESS_KEY_ID
+            secret_access_key: $AWS_USER_SECRET_ACCESS_KEY
+        - checkout
+        - check_master
+        - install_ansible
+        - configure_ansible
+        - attach_workspace:
+            at: .
+        - run: 
+            name: Cleanup frontend old workflow 
+            command: |
+              aws s3 rm s3://udapeoples3-<<pipeline.parameters.resourceID>>/ --recursive  --exclude "build-${CIRCLE_WORKFLOW_ID:0:7}/*"
+        - run:
+            name: Cleanup backend old workflow
+            command: |
+              export LATEST_BUILD_IDENTIFIER=${CIRCLE_WORKFLOW_ID:0:7}
 
-            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/cleanup-backend.yml
-            # cleanup
-      - run:
-          name: Cleanup config
-          command: |
-            # cleanup aws 
-            rm -f $AWS_SHARED_CREDENTIALS_FILE
-            rm -f $AWS_CONFIG_FILE
-            rm -f <<pipeline.parameters.ans_inventory_file>>
+              ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/cleanup-backend.yml
+              # cleanup
+        - run:
+            name: Cleanup config
+            command: |
+              # cleanup aws 
+              rm -f $AWS_SHARED_CREDENTIALS_FILE
+              rm -f $AWS_CONFIG_FILE
+              rm -f <<pipeline.parameters.ans_inventory_file>>
 workflows:
   default:
     jobs:
