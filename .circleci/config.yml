@@ -1033,6 +1033,8 @@ jobs:
           secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
       - checkout
       - check_master   
+      - attach_workspace:
+          at: .
       # - restore_cache:
       #     keys: 
       #       - v1-backend-deps-{{ checksum "./backend/package-lock.json" }}
@@ -1250,6 +1252,11 @@ jobs:
             fi
             rm -f $HOME/.ssh/id_ed25519
           when: on_fail
+      - persist_to_workspace:
+          root: .
+          paths:
+            - <<pipeline.parameters.ans_inventory_file>>
+            - src/migrations/*
       - slack/notify:
           event: fail
           template: basic_fail_1
