@@ -3,7 +3,7 @@
 - name: cleanup backend files
   become: true
   ansible.builtin.shell: |
-    if [ -f "/var/www/build-${LATEST_BUILD_IDENTIFIER}" ]; then
+    if [ -d "/var/www/build-${LATEST_BUILD_IDENTIFIER}" ]; then
       sudo rm -rf /var/www/build-${LATEST_BUILD_IDENTIFIER}
     fi
   args:
