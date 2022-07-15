@@ -1936,7 +1936,7 @@ workflows:
               only: master 
       - cleanup:
           requires: 
-          - cloudfront-update
+            - cloudfront-update
           context:
             - org-global
             - aws-context
