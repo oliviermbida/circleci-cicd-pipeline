@@ -4,8 +4,8 @@
   become: true
   ansible.builtin.shell: |
     find /var/www -type d -name "build-*" | grep -v /var/www/build-${LATEST_BUILD_IDENTIFIER}* > builds.txt
-    for d in $(builds.txt) ; do 
-      sudo rm -rf "$d"
+    for d in $(cat builds.txt) ; do 
+      sudo rm -rf $d
     done
     rm -f builds.txt
   args:
