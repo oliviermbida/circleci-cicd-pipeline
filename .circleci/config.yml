@@ -1126,52 +1126,52 @@ jobs:
           command: |
             aws s3 cp \
               ./migrations.txt s3://$CFN_BUCKET/migrations.txt 
-      - run: 
-          name: Run migrations tests
-          working_directory: ./backend
-          command: |
-            # Assumptions: All migrations in $TYPEORM_MIGRATIONS_DIR have not yet been executed
-            # and therefore are not present in the postgres database. To remove this assumption
-            # this command will have to parse the migrations report for any evidence of migrations
-            # already done. Or query the database of such migrations before testing.
+      # - run: 
+      #     name: Run migrations tests
+      #     working_directory: ./backend
+      #     command: |
+      #       # Assumptions: All migrations in $TYPEORM_MIGRATIONS_DIR have not yet been executed
+      #       # and therefore are not present in the postgres database. To remove this assumption
+      #       # this command will have to parse the migrations report for any evidence of migrations
+      #       # already done. Or query the database of such migrations before testing.
 
-            # define test function
-            GREEN='\033[0;32m'       
-            RED='\033[0;31m'        
-            NC='\033[0m' 
-            test_migrations() {
-              PARSE_RESULT=$(grep -oh "$1" $2 >/dev/null; echo $?)
-              echo $PARSE_RESULT
+      #       # define test function
+      #       GREEN='\033[0;32m'       
+      #       RED='\033[0;31m'        
+      #       NC='\033[0m' 
+      #       test_migrations() {
+      #         PARSE_RESULT=$(grep -oh "$1" $2 >/dev/null; echo $?)
+      #         echo $PARSE_RESULT
 
-              case $PARSE_RESULT in
-              0)
-                printf "TEST: ${GREEN}PASSED${NC}\n"
-                ;;
-              *)
-                printf "TEST: ${RED}FAILED${NC}\n"
-                # trigger revert migrations
-                exit 1
-                ;;           
-              esac
-            }
+      #         case $PARSE_RESULT in
+      #         0)
+      #           printf "TEST: ${GREEN}PASSED${NC}\n"
+      #           ;;
+      #         *)
+      #           printf "TEST: ${RED}FAILED${NC}\n"
+      #           # trigger revert migrations
+      #           exit 1
+      #           ;;           
+      #         esac
+      #       }
 
-            # get migrations test details
-            ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
-            cat /tmp/MIGRATIONS_TESTS
-            # get number of tests to perform
-            NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
-            echo $NUMBER_OF_TESTS
+      #       # get migrations test details
+      #       ls $TYPEORM_MIGRATIONS_DIR | sed -e s/-/''/ -e s/.ts/''/ -e 's/\([0-9]*\) *\(.*\)/\2\1/' -e 's/^/Migration /g' -e 's/$/ has been executed successfully./g' >> /tmp/MIGRATIONS_TESTS
+      #       cat /tmp/MIGRATIONS_TESTS
+      #       # get number of tests to perform
+      #       NUMBER_OF_TESTS=$(grep -c ^ /tmp/MIGRATIONS_TESTS)
+      #       echo $NUMBER_OF_TESTS
 
-            n=$(seq $NUMBER_OF_TESTS)
-            for i in $n
-            do
-              # define expected expression in migrations report
-              # e.g "Migration AddOrders1549375960026 has been executed successfully"
-              TEST_PASSED=$(sed -n "$i"p $MIGRATIONS_TESTS)
-              echo $TEST_PASSED
-              # parse migration report and assert expected expression
-              test_migrations "$TEST_PASSED" $MIGRATIONS_REPORT
-            done
+      #       n=$(seq $NUMBER_OF_TESTS)
+      #       for i in $n
+      #       do
+      #         # define expected expression in migrations report
+      #         # e.g "Migration AddOrders1549375960026 has been executed successfully"
+      #         TEST_PASSED=$(sed -n "$i"p $MIGRATIONS_TESTS)
+      #         echo $TEST_PASSED
+      #         # parse migration report and assert expected expression
+      #         test_migrations "$TEST_PASSED" $MIGRATIONS_REPORT
+      #       done
       # - save_cache:
       #     paths: 
       #       - backend/node_modules
