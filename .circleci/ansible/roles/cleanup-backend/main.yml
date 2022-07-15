@@ -4,16 +4,9 @@
   become: true
   ansible.builtin.shell: |
     find /var/www -type d -name "build-*" | grep -v /var/www/build-${LATEST_BUILD_IDENTIFIER}* > builds.txt
-    NUMBER_OF_BUILD_FILES=$(grep -c ^ builds.txt)
-    n=$(seq $NUMBER_OF_BUILD_FILES)
-    for i in $n
-    do
-      # get build file
-      BUILD_FILE=$(sed -n "$i"p builds.txt)
-      # delete file
-      sudo rm -rf $BUILD_FILE
+    for d in $(builds.txt) ; do 
+      sudo rm -rf "$d"
     done
-    #cleanup
     rm -f builds.txt
   args:
     executable: /bin/bash
