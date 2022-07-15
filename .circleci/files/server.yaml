@@ -1,0 +1,88 @@
+Description: >
+  UdaPeople monitoring stack.
+
+Parameters:
+  resourceID:
+    Description: Unique identifier.
+    Type: String
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Sub 'ec2SecurityGroup-${resourceID}'
+      KeyName: '{{resolve:secretsmanager:UdaPeopleSSH:SecretString:keyname}}'
+      ImageId: ami-0c4f7023847b90238  # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type (64-bit (x86))
+      Tags:
+        - Key: Name
+          Value: !Sub 'prometheus-${resourceID}'
+      UserData:
+        Fn::Base64:
+          !Sub |
+            Content-Type: multipart/mixed; boundary="//"
+            MIME-Version: 1.0
+
+            --//
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
+
+            #cloud-config
+            cloud_final_modules:
+            - [scripts-user, always]
+
+            --//
+            Content-Type: text/x-shellscript; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="userdata.txt"
+            #!/bin/bash -xe
+            #apt-get update -y
+            mkdir /etc/prometheus
+            mkdir /var/lib/prometheus
+            cd /tmp/
+            wget https://github.com/prometheus/prometheus/releases/download/v2.37.0/prometheus-2.37.0.linux-amd64.tar.gz
+            tar xvfz prometheus-2.37.0.linux-amd64.tar.gz
+            cp prometheus-2.37.0.linux-amd64/prometheus /usr/local/bin
+            cp prometheus-2.37.0.linux-amd64/promtool /usr/local/bin/
+            cp -r prometheus-2.37.0.linux-amd64/consoles /etc/prometheus
+            cp -r prometheus-2.37.0.linux-amd64/console_libraries /etc/prometheus
+            rm -rf prometheus-2.37.0.linux-amd64.tar.gz prometheus-2.37.0.linux-amd64
+
+            touch /etc/prometheus/prometheus.yml
+            echo "global:" >> /etc/prometheus/prometheus.yml
+            echo "  scrape_interval: 1s" >> /etc/prometheus/prometheus.yml
+            echo "  evaluation_interval: 1s" >> /etc/prometheus/prometheus.yml
+            echo "    " >> /etc/prometheus/prometheus.yml
+            echo "scrape_configs:" >> /etc/prometheus/prometheus.yml
+            echo "  - job_name: \"node\"" >> /etc/prometheus/prometheus.yml
+            echo "    ec2_sd_configs:" >> /etc/prometheus/prometheus.yml
+            echo "      - region: ${AWS::Region}" >> /etc/prometheus/prometheus.yml
+            echo "        access_key: {{resolve:secretsmanager:udapeople_access_key_id}}" >> /etc/prometheus/prometheus.yml
+            echo "        secret_key: {{resolve:secretsmanager:udapeople_secret_access_key}}" >> /etc/prometheus/prometheus.yml
+            echo "        port: 9100" >> /etc/prometheus/prometheus.yml
+            
+            touch /etc/systemd/system/prometheus.service
+            echo "[Unit]" >> /etc/systemd/system/prometheus.service
+            echo "Description=Prometheus" >> /etc/systemd/system/prometheus.service
+            echo "After=network-online.target" >> /etc/systemd/system/prometheus.service
+            echo "    " >> /etc/systemd/system/prometheus.service
+            echo "[Service]" >> /etc/systemd/system/prometheus.service
+            echo "User=ubuntu" >> /etc/systemd/system/prometheus.service
+            echo "Type=simple" >> /etc/systemd/system/prometheus.service
+            echo "ExecStart=/usr/local/bin/prometheus \" >> /etc/systemd/system/prometheus.service
+            echo "    --config.file /etc/prometheus/prometheus.yml \" >> /etc/systemd/system/prometheus.service
+            echo "    --storage.tsdb.path /var/lib/prometheus/ \" >> /etc/systemd/system/prometheus.service
+            echo "    --web.console.templates=/etc/prometheus/consoles \" >> /etc/systemd/system/prometheus.service
+            echo "    --web.console.libraries=/etc/prometheus/console_libraries" >> /etc/systemd/system/prometheus.service
+            echo "    " >> /etc/systemd/system/prometheus.service
+            echo "[Install]" >> /etc/systemd/system/prometheus.service
+            echo "WantedBy=multi-user.target" >> /etc/systemd/system/prometheus.service
+            
+            systemctl daemon-reload
+            systemctl enable prometheus
+
+            --//--

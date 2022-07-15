@@ -18,3 +18,4 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub 'backend-${resourceID}'
+      Monitoring: true
