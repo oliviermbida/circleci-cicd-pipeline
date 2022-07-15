@@ -43,13 +43,13 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
   run_migrations:
     type: boolean
-    default: false
+    default: true
   run_deploy_frontend:
     type: boolean
     default: true
