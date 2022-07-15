@@ -145,9 +145,12 @@ commands:
       commit_message:
         type: string
         default: "NO_BUILD Auto commit from CircleCI [skip ci]"
+      commit_branch:
+        type: string
+        default: "development"
       commit:
-          type: boolean
-          default: false 
+        type: boolean
+        default: false 
     steps: 
       # - checkout
       # For a self-hosted runner, ensure that you have an ssh-agent on your system 
@@ -182,10 +185,10 @@ commands:
                     git config --global gc.auto 0 || true
                     git config user.email $USER_EMAIL
                     git config user.name $USER_NAME
-                    git checkout master
-                    git pull origin master
+                    git checkout <<parameters.commit_branch>>
+                    git pull origin <<parameters.commit_branch>>
                     git commit --allow-empty -am "<<parameters.commit_message>>"
-                    git push origin master
+                    git push origin <<parameters.commit_branch>>
                   else
                     echo "No commit to GitHub"
                   fi
