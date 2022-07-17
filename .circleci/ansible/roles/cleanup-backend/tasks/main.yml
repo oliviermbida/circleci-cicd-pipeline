@@ -6,7 +6,7 @@
     paths: /var/www
     file_type: directory
     excludes:
-      - "/var/www/build-${LATEST_BUILD_IDENTIFIER}*" 
+      - "/var/www/build-${LATEST_BUILD_IDENTIFIER}" 
   patterns: 'build-*'
   register: build_dirs
 - name: cleanup backend old workflow files
