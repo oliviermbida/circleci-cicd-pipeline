@@ -1025,6 +1025,7 @@ jobs:
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/configure-server.yml
       - run:
           name: Setup prometheus server
+          no_output_timeout: 30m
           command: |
             #        
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/prometheus-server.yml
