@@ -456,6 +456,9 @@ commands:
                 --name /aws/reference/secretsmanager/udapeople_ssh_key \
                 --with-decryption --output text --query "Parameter.Value" > "$HOME/.ssh/id_ed25519"
             chmod 0700 "$HOME/.ssh/id_ed25519" 
+            echo "$HOME/.ssh" > /tmp/SSH_CONFIG_DIR
+            chmod 0700 /tmp/SSH_CONFIG_DIR
+
 
 # create_changes
 # Multi IAM User and roles needed for various steps in creating
@@ -1039,8 +1042,8 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
-
-            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' .circleci/ansible/prometheus-server.yml
+            SSH_KEY_DIR=$(cat /tmp/SSH_CONFIG_DIR)
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' --private-key $SSH_KEY_DIR/id_ed25519 .circleci/ansible/prometheus-server.yml
           environment:
             PARAM_AWS_ADMIN_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
             PARAM_AWS_ADMIN_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
