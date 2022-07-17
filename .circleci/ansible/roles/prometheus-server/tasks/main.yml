@@ -1,9 +1,9 @@
 ---
 
-- include: pretasks.yml
-- include: install.yml
+- import_tasks: pretasks.yml
+- import_tasks: install.yml
   become: true
-- include: configure.yml
+- import_tasks: configure.yml
   become: true
 - name: ensure prometheus service is started and enabled
   become: true

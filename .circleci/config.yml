@@ -43,7 +43,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -1027,8 +1027,24 @@ jobs:
           name: Setup prometheus server
           no_output_timeout: 30m
           command: |
-            #        
-            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/prometheus-server.yml
+            #  
+            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_ADMIN_ACCESS_KEY_ID")
+
+            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_ADMIN_SECRET_ACCESS_KEY")
+
+            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_DEFAULT_REGION")
+
+            EC2_USER=$(aws ssm get-parameter \
+                --name /aws/reference/secretsmanager/UdaPeopleSSH \
+                --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
+            EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
+
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' .circleci/ansible/prometheus-server.yml
+          environment:
+            PARAM_AWS_ADMIN_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
+            PARAM_AWS_ADMIN_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
+            PARAM_AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
       - persist_to_workspace:
           root: .
           paths:
