@@ -1,0 +1,55 @@
+---
+- name: Assert usage of systemd 
+  assert:
+    that: ansible_service_mgr == 'systemd'
+    msg: "systemd required"
+- name: Get systemd version
+  command: systemctl --version
+  changed_when: false
+  check_mode: false
+  register: __systemd_version
+- name: Set systemd version fact
+  set_fact:
+    prometheus_systemd_version: "{{ __systemd_version.stdout_lines[0].split(' ')[-1] }}"
+# - name: Set prometheus external metrics path
+#   set_fact:
+#     prometheus_metrics_path: "/{{ ( prometheus_web_external_url + '/metrics' ) | regex_replace('^(.*://)?(.*?)/') }}"
+- name: Alert when prometheus_alertmanager_config is empty, but prometheus_alert_rules is specified
+  debug:
+    msg: >
+      No alertmanager configuration was specified. Specify a prometheus_alertmanager_config.
+  when:
+    - prometheus_alertmanager_config == []
+    - prometheus_alert_rules != []
+- block:
+    - name: Get latest release
+      uri:
+        url: "https://api.github.com/repos/prometheus/prometheus/releases/latest"
+        method: GET
+        return_content: true
+        status_code: 200
+        body_format: json
+        validate_certs: false
+        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+      no_log: "{{ not lookup('env', 'ANSIBLE_DEBUG') | bool }}"
+      register: _latest_release
+      until: _latest_release.status == 200
+      retries: 5
+
+    - name: "Set prometheus version fact to {{ _latest_release.json.tag_name[1:] }}"
+      set_fact:
+        prometheus_version: "{{ _latest_release.json.tag_name[1:] }}"
+- block:
+    - name: "Get checksum list"
+      set_fact:
+        __prometheus_checksums: "{{ lookup('url', 'https://github.com/prometheus/prometheus/releases/download/v' + prometheus_version + '/sha256sums.txt', wantlist=True) | list }}"
+      run_once: true
+
+    - name: "Get checksum for amd64 architecture"
+      set_fact:
+        __prometheus_checksum: "{{ item.split(' ')[0] }}"
+      with_items: "{{ __prometheus_checksums }}"
+      when:
+        - "('linux-amd64.tar.gz') in item"
+  delegate_to: localhost
