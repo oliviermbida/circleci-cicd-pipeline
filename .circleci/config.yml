@@ -1001,12 +1001,17 @@ jobs:
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
 
+            PROMETHEUS_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='prometheus-<<pipeline.parameters.resourceID>>') 
+
             # Add back-end connection details to ansible inventory
             # default host inventory /etc/ansible/hosts
             # ansible_ssh_private_key_file=./web-key.pem
 
-            if [[ $EC2_HOST != "" && -f ".circleci/ansible/inventory.ini" ]]; then
+            if [[ $EC2_HOST != "" && $PROMETHEUS_HOST != "" && -f ".circleci/ansible/inventory.ini" ]]; then
               echo "web ansible_host=$EC2_HOST ansible_connection=ssh  ansible_user=$EC2_USER" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
+              echo "server ansible_host=$PROMETHEUS_HOST ansible_connection=ssh  ansible_user=ec2_user" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
+
             fi          
             chmod 0600 ".circleci/ansible/inventory.ini"
 
@@ -1018,6 +1023,11 @@ jobs:
           command: |
             #        
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/configure-server.yml
+      - run:
+          name: Setup prometheus server
+          command: |
+            #        
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/prometheus-server.yml
       - persist_to_workspace:
           root: .
           paths:
