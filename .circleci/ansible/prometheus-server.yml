@@ -63,6 +63,10 @@
         annotations:
           description: '{% raw %}{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.{% endraw %}'
           summary: '{% raw %}Instance {{ $labels.instance }} down{% endraw %}'
+  pre_tasks:
+    - name: "Wait 15 seconds for target connection to become reachable/usable."
+      wait_for_connection:
+        timeout: 15
   environment:
     - EC2_HOST: "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}"
     - AWS_DEFAULT_REGION: "{{ lookup('ansible.builtin.env', 'AWS_DEFAULT_REGION')}}"
