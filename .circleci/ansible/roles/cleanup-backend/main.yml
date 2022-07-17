@@ -1,12 +1,18 @@
 ---
 
-- name: cleanup backend oldworkflow
+- name: find backend old workflow files
   become: true
-  ansible.builtin.shell: |
-    find /var/www -type d -name "build-*" | grep -v /var/www/build-${LATEST_BUILD_IDENTIFIER}* > builds.txt
-    for d in $(cat builds.txt) ; do 
-      sudo rm -rf $d
-    done
-    rm -f builds.txt
-  args:
-    executable: /bin/bash
+  ansible.builtin.find: 
+    paths: /var/www
+    file_type: directory
+    excludes:
+      - "/var/www/build-${LATEST_BUILD_IDENTIFIER}*" 
+  patterns: 'build-*'
+  recurse: yes
+  register: build_dirs
+- name: cleanup backend old workflow files
+  become: true
+  ansible.builtin.file: 
+    path: "{{ item.path }}" 
+    state: absent
+  with_items: "{{ build_dirs['files'] }}"
