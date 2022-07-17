@@ -8,7 +8,6 @@
     excludes:
       - "/var/www/build-${LATEST_BUILD_IDENTIFIER}*" 
   patterns: 'build-*'
-  recurse: yes
   register: build_dirs
 - name: cleanup backend old workflow files
   become: true
