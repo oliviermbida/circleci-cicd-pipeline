@@ -33,7 +33,7 @@ prometheus_scrape_configs:
         filters:
           - name: tag:Name
             values:
-              - "prometheus-{{ resource_id }}"
+              # - "prometheus-{{ resource_id }}"
               - "backend-{{ resource_id }}"
     relabel_configs:
       - source_labels: [__meta_ec2_public_dns_name]
@@ -45,7 +45,7 @@ prometheus_scrape_configs:
     metrics_path: "/metrics" #"{{ prometheus_metrics_path }}"
     static_configs:
       - targets:
-          - "{{ prometheus_target }}:9100"
+          - "{{ prometheus_target }}:9090"
   - job_name: "node"
     file_sd_configs:
       - files:
