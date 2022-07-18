@@ -20,8 +20,6 @@
     group: prometheus
     mode: 0640
     validate: "{{ prometheus_binary_local_dir }}/promtool check config %s"
-  notify:
-    - reload prometheus
 # - name: configure Prometheus web
 #   copy:
 #     content: "{{ prometheus_web_config | to_nice_yaml(indent=2,sort_keys=False) }}"
