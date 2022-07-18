@@ -16,7 +16,7 @@ parameters:
 #     default: false
   run_smoke_test:
     type: boolean
-    default: true
+    default: false
   commit:
     type: boolean
     default: false
@@ -49,19 +49,19 @@ parameters:
     default: true
   run_migrations:
     type: boolean
-    default: true
+    default: false
   run_deploy_frontend:
     type: boolean
-    default: true
+    default: false
   run_deploy_backend:
     type: boolean
-    default: true
+    default: false
   run_cloudfront_update:
     type: boolean
-    default: true
+    default: false
   run_cleanup:
     type: boolean
-    default: true
+    default: false
 # Cloudfront
   use_cloudfront: 
     type: boolean
@@ -1025,10 +1025,15 @@ jobs:
             unset EC2_USER
             unset EC2_HOST        
       - run:
-          name: Configure server
+          name: Configure backend
           command: |
-            #        
+            #       
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/configure-server.yml
+      - run:
+          name: Setup prometheus node exporter
+          command: |
+            # Backend       
+            ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> .circleci/ansible/prometheus-node-exporter.yml
       - run:
           name: Setup prometheus server
           no_output_timeout: 30m
