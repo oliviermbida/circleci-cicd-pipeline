@@ -21,7 +21,7 @@ prometheus_global:
 prometheus_targets:
   node:
   - targets:
-    - "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}:9090"
+    - "{{ node_target }}"
 prometheus_scrape_configs:
   - job_name: "ec2_node"
     # metrics_path: "{{ prometheus_metrics_path }}"
@@ -30,11 +30,22 @@ prometheus_scrape_configs:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
         port: 9100
+        filters:
+          - name: tag:Name
+            values:
+              - "prometheus-{{ resource_id }}"
+              - "backend-{{ resource_id }}"
+    relabel_configs:
+      - source_labels: [__meta_ec2_public_ip]
+        replacement: '${1}:80'
+        target_label: __address__
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
   - job_name: "prometheus"
     metrics_path: "/metrics" #"{{ prometheus_metrics_path }}"
     static_configs:
       - targets:
-          - "{{ lookup('ansible.builtin.env', 'PROMETHEUS_HOST') }}:9090"
+          - "{{ prometheus_target }}"
   - job_name: "node"
     file_sd_configs:
       - files:

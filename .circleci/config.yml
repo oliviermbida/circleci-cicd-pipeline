@@ -1054,12 +1054,15 @@ jobs:
             PROMETHEUS_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='prometheus-<<pipeline.parameters.resourceID>>')
 
+            RESOURCE_ID=$(eval echo "$PARAM_RESOURCE_ID")
+            
             SSH_KEY_DIR=$(cat /tmp/SSH_CONFIG_DIR)
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' --private-key $SSH_KEY_DIR/id_ed25519 .circleci/ansible/prometheus-server.yml
           environment:
             PARAM_AWS_ADMIN_ACCESS_KEY_ID: $AWS_ADMIN_ACCESS_KEY_ID
             PARAM_AWS_ADMIN_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
             PARAM_AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+            PARAM_RESOURCE_ID: <<pipeline.parameters.resourceID>>
       - persist_to_workspace:
           root: .
           paths:
