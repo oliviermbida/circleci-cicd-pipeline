@@ -1,0 +1,19 @@
+---
+- import_tasks: pretasks.yml
+- import_tasks: install.yml
+  become: true
+  when:
+    ( not __node_exporter_is_installed.stat.exists ) or
+    ( (__node_exporter_current_version_output.stderr_lines | length > 0) and (__node_exporter_current_version_output.stderr_lines[0].split(" ")[2] != node_exporter_version) ) or
+    ( (__node_exporter_current_version_output.stdout_lines | length > 0) and (__node_exporter_current_version_output.stdout_lines[0].split(" ")[2] != node_exporter_version) ) 
+- import_tasks: configure.yml
+  become: true
+- name: Ensure Node Exporter is enabled 
+  become: true
+  systemd:
+    daemon_reload: true
+    name: node_exporter
+    enabled: true
+    state: started
+  when:
+    - not ansible_check_mode
