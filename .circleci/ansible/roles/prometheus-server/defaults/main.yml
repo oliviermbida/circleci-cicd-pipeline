@@ -46,12 +46,6 @@ prometheus_scrape_configs:
     static_configs:
       - targets:
           - "{{ prometheus_target }}:9090"
-    relabel_configs:
-      - source_labels: ["{{ prometheus_target }}"]
-        replacement: '${1}:9090'
-        target_label: __address__
-      - source_labels: ["prometheus-{{ resource_id }}"]
-        target_label: instance
   - job_name: "node"
     file_sd_configs:
       - files:
