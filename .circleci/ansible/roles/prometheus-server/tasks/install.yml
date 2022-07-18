@@ -61,7 +61,7 @@
     - name: propagate official prometheus and promtool binaries
       copy:
         src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
-        dest: "{{ prometheus_binary_local_dir }}/{{ item }}"
+        dest: "{{ _prometheus_binary_install_dir }}/{{ item }}"
         mode: 0755
         owner: root
         group: root
