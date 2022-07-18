@@ -1050,6 +1050,10 @@ jobs:
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
             EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
             ec2 describe-instances --filters Name='tag:Name',Values='backend-<<pipeline.parameters.resourceID>>') 
+
+            PROMETHEUS_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            ec2 describe-instances --filters Name='tag:Name',Values='prometheus-<<pipeline.parameters.resourceID>>')
+
             SSH_KEY_DIR=$(cat /tmp/SSH_CONFIG_DIR)
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' --private-key $SSH_KEY_DIR/id_ed25519 .circleci/ansible/prometheus-server.yml
           environment:
