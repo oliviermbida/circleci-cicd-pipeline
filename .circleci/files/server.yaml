@@ -14,7 +14,7 @@ Resources:
       SecurityGroups:
         - !Sub 'ec2SecurityGroup-${resourceID}'
       KeyName: '{{resolve:secretsmanager:UdaPeopleSSH:SecretString:keyname}}'
-      ImageId: ami-0cff7528ff583bf9a   # Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type
+      ImageId: ami-0c4f7023847b90238  # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type (64-bit (x86))
       Tags:
         - Key: Name
           Value: !Sub 'prometheus-${resourceID}'

@@ -1013,7 +1013,7 @@ jobs:
 
             if [[ $EC2_HOST != "" && $PROMETHEUS_HOST != "" && -f ".circleci/ansible/inventory.ini" ]]; then
               echo "web ansible_host=$EC2_HOST ansible_connection=ssh  ansible_user=$EC2_USER" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
-              echo "server ansible_host=$PROMETHEUS_HOST ansible_connection=ssh  ansible_user=ec2_user" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
+              echo "server ansible_host=$PROMETHEUS_HOST ansible_connection=ssh  ansible_user=$EC2_USER" | tee -a  .circleci/ansible/inventory.ini >> /dev/null
 
             fi          
             chmod 0600 ".circleci/ansible/inventory.ini"
