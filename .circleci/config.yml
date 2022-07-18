@@ -1039,13 +1039,13 @@ jobs:
           no_output_timeout: 30m
           command: |
             #  
-            AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_ADMIN_ACCESS_KEY_ID")
+            export AWS_ACCESS_KEY_ID=$(eval echo "$PARAM_AWS_ADMIN_ACCESS_KEY_ID")
 
-            AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_ADMIN_SECRET_ACCESS_KEY")
+            export AWS_SECRET_ACCESS_KEY=$(eval echo "$PARAM_AWS_ADMIN_SECRET_ACCESS_KEY")
 
-            AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_DEFAULT_REGION")
+            export AWS_DEFAULT_REGION=$(eval echo "$PARAM_AWS_DEFAULT_REGION")
 
-            EC2_USER=$(aws ssm get-parameter \
+            export EC2_USER=$(aws ssm get-parameter \
                 --name /aws/reference/secretsmanager/UdaPeopleSSH \
                 --with-decryption --output text --query "Parameter.Value" | jq -r ."user")
             export EC2_HOST=$(aws --output text --query 'Reservations[*].Instances[*].PublicIpAddress' \

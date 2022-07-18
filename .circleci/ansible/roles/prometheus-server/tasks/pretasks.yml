@@ -56,10 +56,10 @@
 
 - name: "Set node target fact"
   set_fact:
-    node_target: "{{ lookup('ansible.builtin.env', 'EC2_HOST_PRIV') }}:9090"
+    node_target: "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}:9090"
 - name: "Set prometheus target fact"
   set_fact:
-    prometheus_target: "{{ lookup('ansible.builtin.env', 'PROMETHEUS_HOST_PRIV') }}:9090"
+    prometheus_target: "{{ lookup('ansible.builtin.env', 'PROMETHEUS_HOST') }}:9090"
 - name: "Set resource Id fact"
   set_fact:
     resource_id: "{{ lookup('ansible.builtin.env', 'RESOURCE_ID') }}"
