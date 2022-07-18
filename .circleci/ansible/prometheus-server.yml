@@ -9,8 +9,8 @@
     - name: "Wait 15 seconds for target connection to become reachable/usable."
       wait_for_connection:
         timeout: 15
-  environment:
-    - EC2_HOST: "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}"
-    - AWS_DEFAULT_REGION: "{{ lookup('ansible.builtin.env', 'AWS_DEFAULT_REGION')}}"
-    - AWS_ACCESS_KEY_ID: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID')}}"  
-    - AWS_SECRET_ACCESS_KEY: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY')}}" 
+  # environment:
+  #   - EC2_HOST: "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}"
+  #   - AWS_DEFAULT_REGION: "{{ lookup('ansible.builtin.env', 'AWS_DEFAULT_REGION')}}"
+  #   - AWS_ACCESS_KEY_ID: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID')}}"  
+  #   - AWS_SECRET_ACCESS_KEY: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY')}}" 

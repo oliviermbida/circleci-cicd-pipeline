@@ -22,14 +22,14 @@ prometheus_targets:
   node:
   - targets:
     - localhost:9100
-    - $EC2_HOST:9100
+    - "{{ lookup('ansible.builtin.env', 'EC2_HOST') }}:9100"
 prometheus_scrape_configs:
   - job_name: "node"
     # metrics_path: "{{ prometheus_metrics_path }}"
     ec2_sd_configs:
-      - region: $AWS_DEFAULT_REGION
-        access_key: $AWS_ACCESS_KEY_ID
-        secret_key: $AWS_SECRET_ACCESS_KEY
+      - region: "{{ lookup('ansible.builtin.env', 'AWS_DEFAULT_REGION') }}"
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
         port: 9100
 prometheus_alertmanager_config:
   - scheme: https
