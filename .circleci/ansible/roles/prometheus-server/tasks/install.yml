@@ -87,6 +87,8 @@
     owner: root
     group: root
     mode: 0644
+  notify:
+    - restart prometheus
 
 # - name: Install SELinux dependencies
 #   package:
