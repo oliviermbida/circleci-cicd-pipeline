@@ -43,7 +43,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: true
+    default: false
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -1923,6 +1923,8 @@ workflows:
             branches:
               only: development
       - deploy-infrastructure:
+          pre-steps: # Check commit message if NO_BUILD
+            - cancel-workflow   
           # requires: 
           #   - test-frontend
           #   - test-backend
