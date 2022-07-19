@@ -16,7 +16,7 @@ parameters:
 #     default: false
   run_smoke_test:
     type: boolean
-    default: false
+    default: true
   commit:
     type: boolean
     default: false
@@ -43,25 +43,25 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
   run_migrations:
     type: boolean
-    default: false
+    default: true
   run_deploy_frontend:
     type: boolean
-    default: false
+    default: true
   run_deploy_backend:
     type: boolean
-    default: false
+    default: true
   run_cloudfront_update:
     type: boolean
-    default: false
+    default: true
   run_cleanup:
     type: boolean
-    default: false
+    default: true
 # Cloudfront
   use_cloudfront: 
     type: boolean

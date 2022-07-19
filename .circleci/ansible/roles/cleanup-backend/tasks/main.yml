@@ -6,12 +6,13 @@
     paths: /var/www
     file_type: directory
     excludes:
-      - "/var/www/build-${LATEST_BUILD_IDENTIFIER}" 
-  patterns: 'build-*'
+      - "^build-${LATEST_BUILD_IDENTIFIER}*" 
+  patterns: "^build*"
+  use_regex: yes
   register: build_dirs
 - name: cleanup backend old workflow files
   become: true
   ansible.builtin.file: 
     path: "{{ item.path }}" 
     state: absent
-  with_items: "{{ build_dirs['files'] }}"
+  with_items: "{{ build_dirs.files }}"
