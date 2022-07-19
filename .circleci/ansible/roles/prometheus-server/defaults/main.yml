@@ -68,11 +68,69 @@ prometheus_alert_rules:
     annotations:
       description: "This is an alert meant to ensure that the entire alerting pipeline is functional.\nThis alert is always firing, therefore it should always be firing in Alertmanager\nand always fire against a receiver. There are integrations with various notification\nmechanisms that send a notification when this alert is not firing. For example the\n\"DeadMansSnitch\" integration in PagerDuty."
       summary: 'Ensure entire alerting pipeline is functional'
-  - alert: InstanceDown
-    expr: 'up == 0'
-    for: 5m
+  # - alert: InstanceDown
+  #   expr: 'up == 0'
+  #   for: 5m
+  #   labels:
+  #     severity: critical
+  #   annotations:
+  #     description: '{% raw %}{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.{% endraw %}'
+  #     summary: '{% raw %}Instance {{ $labels.instance }} down{% endraw %}'
+  - alert: RebootRequired
+    expr: 'node_reboot_required > 0'
     labels:
-      severity: critical
+      severity: warning
     annotations:
-      description: '{% raw %}{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.{% endraw %}'
-      summary: '{% raw %}Instance {{ $labels.instance }} down{% endraw %}'
+      description: '{% raw %}{{ $labels.instance }} requires a reboot.{% endraw %}'
+      summary: '{% raw %}Instance {{ $labels.instance }} - reboot required{% endraw %}'
+  - alert: NodeFilesystemSpaceFillingUp
+    annotations:
+      description: '{% raw %}Filesystem on {{ $labels.device }} at {{ $labels.instance }} has only {{ printf "%.2f" $value }}% available space left and is filling up.{% endraw %}'
+      summary: 'Filesystem is predicted to run out of space within the next 24 hours.'
+    expr: "(\n  node_filesystem_avail_bytes{job=\"node\",fstype!=\"\"} / node_filesystem_size_bytes{job=\"node\",fstype!=\"\"} * 100 < 40\nand\n  predict_linear(node_filesystem_avail_bytes{job=\"node\",fstype!=\"\"}[6h], 24*60*60) < 0\nand\n  node_filesystem_readonly{job=\"node\",fstype!=\"\"} == 0\n)\n"
+    for: 1h
+    labels:
+      severity: warning
+  - alert: NodeExporterJobMissing
+    expr: absent(up{job="node"})
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Prometheus node exporter job missing (instance {{ $labels.instance }})
+      description: "A Prometheus AlertManager job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: BackendLowMemory
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Backend low memory (instance {{ $labels.instance }})
+      description: "Backend memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: BackendHighCpuLoad
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{job="node",mode="idle"}[2m])) * 100) > 80
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Backend high CPU load (instance {{ $labels.instance }})
+      description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: BackendNetworkReceiveErrors
+    expr: rate(node_network_receive_errs_total[2m]) / rate(node_network_receive_packets_total[2m]) > 0.01
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Backend Network Receive Errors (instance {{ $labels.instance }})
+      description: "Backend {{ $labels.instance }} interface {{ $labels.device }} has encountered {{ printf \"%.0f\" $value }} receive errors in the last two minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - alert: BackendNetworkTransmitErrors
+    expr: rate(node_network_transmit_errs_total[2m]) / rate(node_network_transmit_packets_total[2m]) > 0.01
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Backend Network Transmit Errors (instance {{ $labels.instance }})
+      description: "Backend {{ $labels.instance }} interface {{ $labels.device }} has encountered {{ printf \"%.0f\" $value }} transmit errors in the last two minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+
+
