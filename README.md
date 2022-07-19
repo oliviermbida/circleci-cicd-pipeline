@@ -410,6 +410,45 @@ I think the issue is to do with 'less' which you can install if you don't want t
 
 This approach of updating the latest deployment folder has the advantage of not pulling down stacks or deleted any infrastructure but just a folder which is less time consuming that creating new stacks.
 
+# Monitoring - Prometheus
+
+Using ansible:
+
+Setup prometheus server in an EC2 instance.
+
+![Prometheus server](/docs/screenshots/PROMETHEUS_SERVER.png)
+
+Setup prometheus node exporter in the backend instance.
+
+![Prometheus node](/docs/screenshots/PROMETHEUS_NODE.png)
+
+Now let the server discover the node:
+
+        prometheus_scrape_configs:
+        - job_name: "ec2_node"
+        # metrics_path: "{{ prometheus_metrics_path }}"
+        ec2_sd_configs:
+        - region: "{{ lookup('ansible.builtin.env', 'AWS_DEFAULT_REGION') }}"
+                access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+                secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+                port: 9100
+                filters:
+                - name: tag:Name
+                values:
+                - "backend-{{ resource_id }}"
+        relabel_configs:
+        - source_labels: [__meta_ec2_public_dns_name]
+                replacement: '${1}:9100'
+                target_label: __address__
+        - source_labels: [__meta_ec2_tag_Name]
+                target_label: instance
+
+![Prometheus discovery](/docs/screenshots/URL05_SCREENSHOT.png)
+
+And get the metrics
+
+![Prometheus node metrics](/docs/screenshots/SCREENSHOT11.png)
+
 # Teardown
 
 This teardowns the whole aws infrastructure:
