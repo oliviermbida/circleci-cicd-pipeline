@@ -360,6 +360,10 @@ SSH into backend EC2 instance and maually check that the PM2 service is running 
 
 ![Backend Test](/docs/screenshots/BACKEND_SMOKE_TEST.png)
 
+And in case of a failed somke test, rollback deployment
+
+![Smoke test Rollback](/docs/screenshots/SMOKETEST_ROLLBACK.png)
+
 # Manual Approval
 
 ![Manual Approval](/docs/screenshots/APPROVAL01.png)
@@ -410,6 +414,12 @@ I think the issue is to do with 'less' which you can install if you don't want t
 
 This approach of updating the latest deployment folder has the advantage of not pulling down stacks or deleted any infrastructure but just a folder which is less time consuming that creating new stacks.
 
+# Cleanup
+
+Once the latest build is deployed, the old build files are removed.
+
+![Cleanup old workflow](/docs/screenshots/SCREENSHOT09.png)
+
 # Monitoring - Prometheus
 
 Using ansible:
@@ -458,6 +468,9 @@ This teardowns the whole aws infrastructure:
 # Filter Jobs by branch
 
 ![Filters](/docs/screenshots/SCREENSHOT10_1.png)
+
+![Filters deployment](/docs/screenshots/SCREENSHOT_DEPLOYMENTS_APPROVAL.png)
+
 
 # Troubleshooting by skipping jobs
 
