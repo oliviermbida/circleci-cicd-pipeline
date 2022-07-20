@@ -57,7 +57,7 @@ prometheus_alertmanager_config:
       username: 
       password: 
     static_configs:
-      - targets: ["localhost:9093"]
+      - targets: ["localhost:9093", "0.0.0.0:9094"]
     # proxy_url: "127.0.0.2"
 
 prometheus_alert_rules:
