@@ -47,19 +47,19 @@
         - "('linux-amd64.tar.gz') in item"
   delegate_to: localhost
 
-- name: Fail when there are no receivers defined
-  fail:
-    msg: "Configure alert receivers (`alertmanager_receivers`). Otherwise alertmanager won't know where to send alerts."
-  when:
-    - alertmanager_config_file == 'alertmanager.yml.j2'
-    - alertmanager_receivers == []
+# - name: Fail when there are no receivers defined
+#   fail:
+#     msg: "Configure alert receivers (`alertmanager_receivers`). Otherwise alertmanager won't know where to send alerts."
+#   when:
+#     - alertmanager_config_file == 'alertmanager.yml.j2'
+#     - alertmanager_receivers == []
 
-- name: Fail when there is no alert route defined
-  fail:
-    msg: "Configure alert routing (`alertmanager_route`). Otherwise alertmanager won't know how to send alerts."
-  when:
-    - alertmanager_config_file == 'alertmanager.yml.j2'
-    - alertmanager_route == {}
+# - name: Fail when there is no alert route defined
+#   fail:
+#     msg: "Configure alert routing (`alertmanager_route`). Otherwise alertmanager won't know how to send alerts."
+#   when:
+#     - alertmanager_config_file == 'alertmanager.yml.j2'
+#     - alertmanager_route == {}
 - name: "Set slack webhook url fact"
   set_fact:
     slack_webhook_url: "{{ lookup('ansible.builtin.env', 'PROMETHEUS_SLACK_WEBHOOK_URL') }}"
