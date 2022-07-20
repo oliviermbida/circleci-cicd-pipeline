@@ -28,7 +28,7 @@ alertmanager_receivers:
   - name: 'slack-notifications'
     slack_configs:
       - send_resolved: true
-        channel: "{{ slack_default_channel }}"
+        channel: "#{{ slack_default_channel }}"
 
 alertmanager_route:
   group_by: ['alertname']
