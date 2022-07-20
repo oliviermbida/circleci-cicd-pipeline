@@ -43,7 +43,7 @@ parameters:
     default: false
   run_deploy_infrastructure:
     type: boolean
-    default: false
+    default: true
   run_configure_infrastructure:
     type: boolean
     default: true
@@ -1062,6 +1062,10 @@ jobs:
 
             export RESOURCE_ID=$(eval echo "$PARAM_RESOURCE_ID")
 
+            # Slack notification
+            export PROMETHEUS_SLACK_WEBHOOK_URL=$(eval echo "$PARAM_SLACK_WEBHOOK_URL")
+            export PROMETHEUS_SLACK_CHANNEL=$(eval echo "$PARAM_SLACK_DEFAULT_CHANNEL")
+
             SSH_KEY_DIR=$(cat /tmp/SSH_CONFIG_DIR)
             ansible-playbook  -i <<pipeline.parameters.ans_inventory_file>> --ssh-extra-args='-o StrictHostKeyChecking=no' --private-key $SSH_KEY_DIR/id_ed25519 .circleci/ansible/prometheus-server.yml
           environment:
@@ -1069,6 +1073,8 @@ jobs:
             PARAM_AWS_ADMIN_SECRET_ACCESS_KEY: $AWS_ADMIN_SECRET_ACCESS_KEY
             PARAM_AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
             PARAM_RESOURCE_ID: <<pipeline.parameters.resourceID>>
+            PARAM_SLACK_WEBHOOK_URL: $SLACK_WEBHOOK_URL
+            PARAM_SLACK_DEFAULT_CHANNEL: $SLACK_DEFAULT_CHANNEL
       - persist_to_workspace:
           root: .
           paths:

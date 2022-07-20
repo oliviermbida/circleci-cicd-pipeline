@@ -18,6 +18,7 @@ prometheus_global:
   scrape_interval: 1s
   # scrape_timeout: 10s
   evaluation_interval: 1s
+  slack_api_url: "{{ lookup('ansible.builtin.env', 'PROMETHEUS_SLACK_WEBHOOK_URL') }}"
 prometheus_targets:
   node:
   - targets:
@@ -59,6 +60,11 @@ prometheus_alertmanager_config:
     static_configs:
       - targets: ["127.0.0.1:9093"]
     proxy_url: "127.0.0.2"
+  - receiver: 'slack-notifications'
+    group_by: [alertname]
+  - name: 'slack-notifications'
+    slack_configs:
+      - channel: "{{ lookup('ansible.builtin.env', 'PROMETHEUS_SLACK_CHANNEL') }}"
 prometheus_alert_rules:
   - alert: Watchdog
     expr: vector(1)
@@ -68,14 +74,14 @@ prometheus_alert_rules:
     annotations:
       description: "This is an alert meant to ensure that the entire alerting pipeline is functional.\nThis alert is always firing, therefore it should always be firing in Alertmanager\nand always fire against a receiver. There are integrations with various notification\nmechanisms that send a notification when this alert is not firing. For example the\n\"DeadMansSnitch\" integration in PagerDuty."
       summary: 'Ensure entire alerting pipeline is functional'
-  # - alert: InstanceDown
-  #   expr: 'up == 0'
-  #   for: 5m
-  #   labels:
-  #     severity: critical
-  #   annotations:
-  #     description: '{% raw %}{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.{% endraw %}'
-  #     summary: '{% raw %}Instance {{ $labels.instance }} down{% endraw %}'
+  - alert: InstanceDown
+    expr: 'up == 0'
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      description: '{% raw %}{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.{% endraw %}'
+      summary: '{% raw %}Instance {{ $labels.instance }} down{% endraw %}'
   - alert: RebootRequired
     expr: 'node_reboot_required > 0'
     labels:
@@ -114,7 +120,7 @@ prometheus_alert_rules:
       severity: warning
     annotations:
       summary: '{% raw %}Backend high CPU load (instance {{ $labels.instance }}){% endraw %}'
-      description: "{% raw %}CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}{% endraw %}"
+      description: "{% raw %}Backend CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}{% endraw %}"
   - alert: BackendNetworkReceiveErrors
     expr: 'rate(node_network_receive_errs_total[2m]) / rate(node_network_receive_packets_total[2m]) > 0.01'
     for: 2m
