@@ -27,8 +27,8 @@ alertmanager_slack_api_url: "{{ slack_webhook_url }}"
 alertmanager_receivers:
   - name: 'slack-notifications'
     slack_configs:
-      - send_resolved: true
-        channel: "#{{ slack_default_channel }}"
+      # - send_resolved: true
+      - channel: "#{{ slack_default_channel }}"
 
 alertmanager_route:
   group_by: ['alertname']
