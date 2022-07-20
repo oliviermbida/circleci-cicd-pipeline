@@ -1,2 +1,3 @@
 ---
 _alertmanager_binary_install_dir: '/usr/local/bin'
+_alertmanager_amtool_config_dir: '/etc/amtool'
