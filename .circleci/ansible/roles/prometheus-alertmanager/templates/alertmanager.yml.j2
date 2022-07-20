@@ -1,0 +1,21 @@
+{{ ansible_managed | comment }}
+
+global:
+  resolve_timeout: {{ alertmanager_resolve_timeout | quote}}
+
+{% if alertmanager_slack_api_url | string | length %}
+  slack_api_url: {{ alertmanager_slack_api_url | quote }}
+{% endif %}
+{% if alertmanager_http_config | length %}
+  http_config:
+    {{ alertmanager_http_config | to_nice_yaml(indent=2) | indent(4, False)}}
+{% endif %}
+templates:
+- '{{ alertmanager_config_dir }}/templates/*.tmpl'
+{% if alertmanager_receivers | length %}
+receivers:
+{{ alertmanager_receivers | to_nice_yaml(indent=2) }}
+{% endif %}
+
+route:
+  {{ alertmanager_route | to_nice_yaml(indent=2) | indent(2, False) }}

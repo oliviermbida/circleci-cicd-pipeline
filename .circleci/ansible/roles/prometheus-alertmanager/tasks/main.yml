@@ -1,0 +1,19 @@
+---
+- include: preflight.yml
+
+- include: install.yml
+  become: true
+
+- include: configure.yml
+  become: true
+
+- name: Ensure alertmanager service is started and enabled
+  become: true
+  systemd:
+    daemon_reload: true
+    name: alertmanager
+    state: started
+    enabled: true
+
+- name: Flush alertmangaer handlers after run.
+  meta: flush_handlers

@@ -1,0 +1,42 @@
+alertmanager_config_dir: /etc/alertmanager
+alertmanager_db_dir: /var/lib/alertmanager
+
+alertmanager_config_file: 'alertmanager.yml.j2'
+
+alertmanager_template_files:
+  - alertmanager/templates/*.tmpl
+
+alertmanager_web_listen_address: '0.0.0.0:9093'
+alertmanager_web_external_url: 'http://localhost:9093/'
+
+alertmanager_http_config: {}
+
+alertmanager_resolve_timeout: 3m
+
+alertmanager_smtp: {}
+
+alertmanager_config_flags_extra: {}
+
+alertmanager_slack_api_url: "{{ slack_webhook_url }}"
+
+# alertmanager_cluster:
+#   listen-address: ""
+  
+alertmanager_receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - send_resolved: true
+        channel: "{{ slack_default_channel }}"
+
+alertmanager_route:
+  group_by: ['alertname']
+  # group_wait: 10s
+  # group_interval: 1m
+  # repeat_interval: 1h
+  receiver: 'slack-notifications'
+
+alertmanager_amtool_config_file: 'amtool.yml.j2'
+
+alertmanager_amtool_config_alertmanager_url: "{{ alertmanager_web_external_url }}"
+
+alertmanager_amtool_config_output: 'extended'
