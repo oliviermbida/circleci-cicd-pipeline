@@ -5,8 +5,11 @@
   user: ubuntu
   roles:
   - prometheus-server
+- name: "Prometheus alertmanager play."
+  hosts: server
+  user: ubuntu
+  roles:
   - prometheus-alertmanager
-
   # pre_tasks:
   #   - name: "Wait 15 seconds for target connection to become reachable/usable."
   #     wait_for_connection:
