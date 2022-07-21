@@ -1,5 +1,11 @@
 # circleci-cicd-pipeline
-Circleci Pipeline to deploy a web application
+Circleci Pipeline to deploy a web application an implementation of :
+
+- Utilizing Deployment Strategies to design and build CI/CD pipelines that support Continuous Delivery processes.
+
+- Utilizing a configuration management tool to accomplish deployment to cloud-based servers.
+
+- Surface critical server errors for diagnosis using centralized structured logging.
 
 ![Solution Architecture](/docs/screenshots/circleci_cicd_pipeline.png)
 
