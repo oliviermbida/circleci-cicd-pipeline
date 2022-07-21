@@ -493,7 +493,7 @@ commands:
       workflowID: 
         description: Deployment workflow ID
         type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
+        default: "${CIRCLE_WORKFLOW_ID:0:7}"
       resourceID: 
         description: Unique resource identifier
         type: string
@@ -621,7 +621,7 @@ commands:
       workflowID: 
         description: Deployment workflow ID
         type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
+        default: "${CIRCLE_WORKFLOW_ID:0:7}"
       resourceID: 
         description: Unique resource identifier
         type: string
