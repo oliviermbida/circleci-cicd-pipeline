@@ -19,25 +19,25 @@ parameters:
     default: true
   commit:
     type: boolean
-    default: false
+    default: true
   run_build_frontend:
     type: boolean
-    default: false
+    default: true
   run_build_backend:
     type: boolean
-    default: false
+    default: true
   run_test_frontend:
     type: boolean
-    default: false
+    default: true
   run_test_backend:
     type: boolean
-    default: false
+    default: true
   run_scan_frontend:
     type: boolean
-    default: false
+    default: true
   run_scan_backend:
     type: boolean
-    default: false
+    default: true
   run_scan_sonar:
     type: boolean
     default: false
@@ -804,7 +804,8 @@ jobs:
           command: |
             npm install 
             #npm audit --audit-level=critical
-            npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical 
+            #--force
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD frontend npm audit fix"
@@ -844,7 +845,8 @@ jobs:
           command: |
             npm install
             #npm audit --audit-level=critical 
-            npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical 
+            #--force
     # Will be a good idea to commit the audit fix. This should be run by authorize  $USER_NAME.
       - commit_to_github:
           commit_message: "NO_BUILD backend npm audit fix"
