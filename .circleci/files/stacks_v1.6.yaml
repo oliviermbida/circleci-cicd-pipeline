@@ -1,0 +1,90 @@
+Description: >
+  Nested top level Stack Update version 1.6
+  S3 Bucket policy for deployment folder
+Parameters:
+  resourceID:
+    Description: Unique identifier.
+    Type: String
+  workflowID:
+    Description: Deployment workflow ID
+    Type: String
+
+Resources:
+  compliance:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+        workflowID: !Ref workflowID
+      TemplateURL: security_v2.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-compliance-${resourceID}'
+  rdspostgres:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: rds.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-rdspostgres-${resourceID}'
+  ec2backend:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: backend.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-backend-${resourceID}'
+  s3frontend:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: frontend.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-frontend-${resourceID}'
+  cdn:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - s3frontend
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: cloudfront.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-cdn-${resourceID}'
+  prometheus:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+      - compliance
+    Properties:
+      Parameters:
+        resourceID: !Ref resourceID
+      TemplateURL: server.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-prometheus-${resourceID}'
+Outputs:
+  DnsEndpoint:
+    Description: Cloudfront Endpoint Name 
+    Value: !GetAtt [ cdn, Outputs.DnsEndpoint ]
+  DnsHostname:
+    Description: Cloudfront Host Name
+    Value: !GetAtt [ cdn, Outputs.DnsHostname ]
+  DistributionID: 
+    Description: Cloudfront Distribution ID
+    Value: !GetAtt [ cdn, Outputs.DistributionID ]
+  OriginID: 
+    Description: Cloudfront Origin ID
+    Value: !GetAtt [ cdn, Outputs.OriginID ]
