@@ -21,6 +21,8 @@ Circleci Pipeline to deploy a web application
 
 . Slack issue notification
 
+. Monitoring: Prometheus Alerts with Slack notification
+
 # Security
 
 . Multi IAM users Circleci pipeline job step execution i.e IAM users such as Admin(security), Database Admin , DevOps team and web developers each have different priviledges in setting up infrastructure and configuration. An example of how different teams have to collaborate.
