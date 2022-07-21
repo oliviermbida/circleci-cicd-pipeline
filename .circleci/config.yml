@@ -620,6 +620,7 @@ commands:
       workflowID: 
         description: Deployment workflow ID
         type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
       resourceID: 
         description: Unique resource identifier
         type: string
@@ -1379,7 +1380,7 @@ jobs:
           # secret_access_key: $AWS_ADMIN_SECRET_ACCESS_KEY
           # region: $AWS_DEFAULT_REGION
           resourceID: <<pipeline.parameters.resourceID>>
-          workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
+          # workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
           stackname: <<pipeline.parameters.environment>>
           changename: s3deploymentpolicy
           type: UPDATE
