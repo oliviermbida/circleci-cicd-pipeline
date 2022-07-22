@@ -48,15 +48,15 @@ alertmanager_receivers:
         #     )
         #   {{- end }}
         text: >-
-          {{ range .Alerts -}}
-          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {% raw %}{{ .Labels.severity }}{% endraw %} {{ end }}
+          {% raw %}{{ range .Alerts -}}
+          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }} {{ end }}
 
           *Description:* {{ .Annotations.description }}
 
           *Details:*
-            {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {% raw %}{{ .Value }}{% endraw %}
+            {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
             {{ end }}
-          {{ end }}
+          {{ end }} {% endraw %}
 alertmanager_route:
   group_by: ['alertname']
   # group_wait: 10s
