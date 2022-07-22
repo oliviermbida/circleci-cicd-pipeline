@@ -49,7 +49,7 @@ alertmanager_receivers:
         #   {{- end }}
         text: >-
           {{ range .Alerts -}}
-          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`
 
           *Description:* {{ .Annotations.description }}
 
