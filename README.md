@@ -1,4 +1,4 @@
-# circleci-cicd-pipeline
+# circleci-cicd-pipeline [![CircleCI](https://dl.circleci.com/status-badge/img/gh/oliviermbida/circleci-cicd-pipeline/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/oliviermbida/circleci-cicd-pipeline/tree/master)
 Circleci Pipeline to deploy a web application an implementation of :
 
 - Utilizing Deployment Strategies to design and build CI/CD pipelines that support Continuous Delivery processes.
