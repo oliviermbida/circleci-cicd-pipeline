@@ -1,4 +1,4 @@
-# circleci-cicd-pipeline
+# circleci-cicd-pipeline [![CircleCI](https://dl.circleci.com/status-badge/img/gh/oliviermbida/circleci-cicd-pipeline/tree/development.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/oliviermbida/circleci-cicd-pipeline/tree/development)
 Circleci Pipeline to deploy a web application
 
 ![Solution Architecture](/docs/screenshots/circleci_cicd_pipeline.png)
