@@ -19,7 +19,7 @@ parameters:
     default: false
   commit:
     type: boolean
-    default: true
+    default: false
   run_build_frontend:
     type: boolean
     default: true
